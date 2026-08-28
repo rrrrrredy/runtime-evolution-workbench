@@ -44,6 +44,19 @@ function Invoke-RewNpm([string[]]$Arguments) {
   if ($LASTEXITCODE -ne 0) { throw "npm failed with exit code $LASTEXITCODE" }
 }
 
+function Test-RewMarketplacePresent([string]$Listing, [string]$Name) {
+  $escaped = [regex]::Escape($Name)
+  return (
+    $Listing -match "(?im)^\s*$escaped(?:\s+|$)" -or
+    $Listing -match "(?im)^\s*Marketplace\s+\W*$escaped\W*$"
+  )
+}
+
+function Test-RewPluginInstalled([string]$Listing, [string]$Selector) {
+  $escaped = [regex]::Escape($Selector)
+  return $Listing -match "(?im)^\s*$escaped\s+installed(?:,|\s|$)"
+}
+
 function Get-RewDataDir([string]$Requested = "") {
   if (-not [string]::IsNullOrWhiteSpace($Requested)) {
     return [System.IO.Path]::GetFullPath($Requested)

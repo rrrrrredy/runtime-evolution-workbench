@@ -4,11 +4,13 @@ All notable changes are recorded here. The project follows semantic versioning a
 
 ## [Unreleased]
 
-- Clean Windows installation and full golden-closure acceptance pending.
+- Isolated Windows install/start/preserve/reinstall/delete/uninstall lifecycle now passes locally; fresh hosted-Windows and full golden-closure evidence remain pending.
 - Public release packaging and compatibility matrix pending.
 - Read-only Agent Run Protocol library for validated, redacted, idempotent Run/Case/Score imports.
 - Windows comparison cleanup now waits for child-process pipes to close and normalizes 8.3 repository paths.
 - Windows CI blocks on one asserted UI golden scenario; tag releases require commit-bound local Hook/App Server evidence without storing model credentials in GitHub.
+- Installer and uninstaller now distinguish an installed plugin from an available marketplace entry, remove the marketplace format emitted by Codex 0.150 correctly, and carry custom port/data settings into service and Startup launches.
+- Release artifacts now include a tag-bound clean-install evidence record, and the deprecated `@types/diff` stub is no longer installed.
 
 ## [0.1.0] - 2026-08-28
 

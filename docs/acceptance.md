@@ -34,4 +34,6 @@ Passing a build is not product acceptance. Version 0.1 may be labeled stable onl
 - Confirm Run data is preserved by default and removed only with an explicit, path-safe `-DeleteData` run.
 - Confirm neither Workflow Environment Factory nor Agent Run Protocol must be running for the product to work.
 
+The repeatable clean-user lifecycle portion is encoded in `scripts\Acceptance-InstallUninstall.ps1` and runs on a fresh GitHub-hosted Windows VM. The real Codex failure-to-safe-evolution closure remains a separate authenticated, locally produced release gate; neither result substitutes for the other.
+
 Record the OS, Codex version, Node version, commit, commands, objective verifier outputs, exported protocol documents, screenshots, known limitations, and uninstall evidence. Do not substitute mocks or unit tests for this clean-environment report.

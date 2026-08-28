@@ -3,6 +3,8 @@ param(
   [switch]$NoStart,
   [switch]$Open,
   [switch]$Repair,
+  [ValidateRange(1024, 65535)][int]$Port = 43119,
+  [string]$DataDir = "",
   [string]$MarketplaceSource = ""
 )
 
@@ -18,6 +20,7 @@ if ($null -eq $codexCommand) { $codexCommand = Get-Command codex -ErrorAction Si
 if ($null -eq $codexCommand) { throw "Codex CLI is required and was not found on PATH." }
 
 $source = if ([string]::IsNullOrWhiteSpace($MarketplaceSource)) { $script:RewRoot } else { $MarketplaceSource }
+$resolvedDataDir = Get-RewDataDir $DataDir
 $marketplaceName = "runtime-evolution-workbench"
 $pluginSelector = "runtime-evolution-workbench@runtime-evolution-workbench"
 
@@ -26,9 +29,9 @@ Write-Host "Building Runtime Evolution Workbench with Node $(& $node -p 'process
 if ($LASTEXITCODE -ne 0) { throw "Release checks failed; nothing was installed." }
 
 $marketplaceOutput = (& $codexCommand.Source plugin marketplace list 2>&1 | Out-String)
-$marketplacePresent = $marketplaceOutput -match '(?im)^Marketplace\s+\W*runtime-evolution-workbench\W*$'
+$marketplacePresent = Test-RewMarketplacePresent $marketplaceOutput $marketplaceName
 $pluginOutput = (& $codexCommand.Source plugin list 2>&1 | Out-String)
-$pluginPresent = $pluginOutput.Contains($pluginSelector, [StringComparison]::OrdinalIgnoreCase)
+$pluginPresent = Test-RewPluginInstalled $pluginOutput $pluginSelector
 
 if ($Repair -and $pluginPresent) {
   & $codexCommand.Source plugin remove $pluginSelector
@@ -66,7 +69,7 @@ if ($EnableStartup) {
   $shell = New-Object -ComObject WScript.Shell
   $shortcut = $shell.CreateShortcut($shortcutPath)
   $shortcut.TargetPath = $powerShellCommand.Source
-  $shortcut.Arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$(Join-Path $PSScriptRoot 'Start.ps1')`""
+  $shortcut.Arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$(Join-Path $PSScriptRoot 'Start.ps1')`" -Port $Port -DataDir `"$resolvedDataDir`""
   $shortcut.WorkingDirectory = $script:RewRoot
   $shortcut.WindowStyle = 7
   $shortcut.Description = "Start Runtime Evolution Workbench locally at sign-in"
@@ -75,7 +78,7 @@ if ($EnableStartup) {
 }
 
 if (-not $NoStart) {
-  & (Join-Path $PSScriptRoot "Start.ps1") -Open:$Open
+  & (Join-Path $PSScriptRoot "Start.ps1") -Open:$Open -Port $Port -DataDir $resolvedDataDir
 }
 
 Write-Host "Runtime Evolution Workbench plugin is installed. Restart Codex to load Hooks, MCP tools, and the Skill."

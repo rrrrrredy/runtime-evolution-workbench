@@ -33,6 +33,10 @@ jobs:
         run: |
           npm ci
           npm run check
+      - name: Install pinned Codex CLI for clean lifecycle acceptance
+        run: npm install --global @openai/codex@0.150.0-alpha.8
+      - name: Verify install, start, preserve, reinstall, delete, and uninstall
+        run: .\scripts\Acceptance-InstallUninstall.ps1 -EvidencePath (Join-Path $env:RUNNER_TEMP "runtime-installation-evidence.json")
       - name: Install CI Chromium
         run: npx playwright install chromium
       - name: Run the single UI golden scenario
@@ -47,3 +51,10 @@ jobs:
           name: runtime-ui-evidence
           path: ${{ runner.temp }}\runtime-ui-evidence
           if-no-files-found: warn
+      - name: Upload installation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-installation-evidence
+          path: ${{ runner.temp }}\runtime-installation-evidence.json
+          if-no-files-found: error

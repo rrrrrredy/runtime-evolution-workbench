@@ -25,6 +25,8 @@ The script repeats the full check and uses the local authenticated Codex to prov
 
 The sanitized JSON includes product, Node, Codex, and tested commit versions, but no local path, prompt history, credential, or repository content. Review it and commit only `release-evidence/runtime-product-gate-0.1.0.json`.
 
+The tag workflow independently runs the isolated Windows installation lifecycle and publishes `runtime-installation-evidence.json` beside the archive. That file is bound to the tag commit, but it does not replace the authenticated real-Run evidence above.
+
 ## Tag gate
 
 The tag workflow verifies that:

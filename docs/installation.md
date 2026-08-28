@@ -30,12 +30,14 @@ Restart Codex so the new Hooks, MCP tools, and Skill are loaded.
 .\scripts\Install.ps1 -EnableStartup -Open
 .\scripts\Install.ps1 -NoStart
 .\scripts\Install.ps1 -Repair
+.\scripts\Install.ps1 -Port 53119 -DataDir D:\AgentData\RuntimeWorkbench
 ```
 
 - `-EnableStartup` adds one current-user shortcut named `Runtime Evolution Workbench.lnk` to the Windows Startup folder.
 - `-Open` opens the authenticated local session URL after the service is healthy.
 - `-NoStart` installs the plugin but does not launch the service.
 - `-Repair` removes and re-adds only this product's existing plugin and marketplace registration before installing.
+- `-Port` and `-DataDir` are forwarded to the first service start and the optional Startup shortcut. When either is customized, launch Codex with matching `REW_PORT` and `REW_DATA_DIR` values so Hooks and MCP tools use the same local instance.
 
 Set `REW_NODE` to an exact Node 22 executable when more than one Node version is installed. Set `REW_DATA_DIR` or pass `-DataDir` to the start/stop scripts to relocate local data. The Hooks and MCP process must receive the same `REW_DATA_DIR` and `REW_PORT` values as the service.
 
@@ -85,3 +87,5 @@ Permanent data removal is separate and explicit:
 ```
 
 The script resolves the target and refuses a drive root, user profile, Local AppData root, or suspiciously broad path. `-DeleteData` is not recoverable by the product. Export important Runs first.
+
+Release CI also executes `scripts\Acceptance-InstallUninstall.ps1` in an isolated Codex home. It proves real plugin/marketplace registration, a loopback service, Startup creation/removal, data preservation, reinstall, explicit deletion, and zero product registration after removal. This lifecycle gate does not replace the authenticated Codex Run evidence described in the release process.

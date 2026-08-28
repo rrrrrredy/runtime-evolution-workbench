@@ -49,6 +49,7 @@ try {
     foreach ($required in @(
       "$folderName/LICENSE",
       "$folderName/scripts/Install.ps1",
+      "$folderName/scripts/Acceptance-InstallUninstall.ps1",
       "$folderName/plugins/runtime-evolution-workbench/.codex-plugin/plugin.json",
       "$folderName/dist/server/index.js",
       "$folderName/dist/web/index.html"
