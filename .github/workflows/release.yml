@@ -1,0 +1,68 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: product
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: product
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          repository: rrrrrredy/agent-run-protocol
+          ref: v0.1.0
+          path: protocol
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: product/package-lock.json
+      - name: Verify locally produced real product evidence
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          .\scripts\Verify-ReleaseEvidence.ps1 -Version $version
+      - name: Build and check release commit
+        run: |
+          npm ci
+          npm run check
+      - name: Run release UI gate
+        env:
+          REW_UI_OUTPUT_DIR: ${{ runner.temp }}\runtime-ui-evidence
+          REW_PROTOCOL_FIXTURE: ${{ github.workspace }}\protocol\examples\workflow.case.code.json
+        run: |
+          npx playwright install chromium
+          npm run probe:ui
+      - name: Build release archive
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          .\scripts\Package-Release.ps1 -Version $version -OutputDirectory (Join-Path $env:GITHUB_WORKSPACE "artifacts")
+          Copy-Item -LiteralPath ".\release-evidence\runtime-product-gate-$version.json" -Destination (Join-Path $env:GITHUB_WORKSPACE "artifacts") -Force
+      - name: Attest release evidence
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: |
+            artifacts/*.zip
+            artifacts/*.sha256
+            artifacts/*.release.json
+            artifacts/runtime-product-gate-*.json
+      - name: Publish GitHub Release
+        working-directory: ${{ github.workspace }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" (Get-ChildItem artifacts -File | ForEach-Object FullName) --verify-tag --generate-notes --title "Runtime Evolution Workbench ${{ github.ref_name }}"

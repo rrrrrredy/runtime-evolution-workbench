@@ -126,7 +126,7 @@ $env:REW_NODE = 'C:\path\to\node-v22\node.exe'
 .\scripts\Check.ps1 -InstallDependencies
 ```
 
-The check performs strict server and web TypeScript builds, a production Vite build, all regression tests, and plugin/marketplace validation. Current acceptance steps and evidence rules are in [acceptance](docs/acceptance.md).
+The check performs strict server and web TypeScript builds, a production Vite build, all regression tests, and plugin/marketplace validation. Current acceptance steps and evidence rules are in [acceptance](docs/acceptance.md); the code-freeze and tag gates are documented in [release process](docs/release-process.md).
 
 Contributions are welcome under [CONTRIBUTING.md](CONTRIBUTING.md). Security reports should follow [SECURITY.md](SECURITY.md).
 

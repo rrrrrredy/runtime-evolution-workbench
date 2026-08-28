@@ -1,0 +1,49 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-product:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: product
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: product
+      - uses: actions/checkout@v4
+        with:
+          repository: rrrrrredy/agent-run-protocol
+          ref: v0.1.0
+          path: protocol
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: product/package-lock.json
+      - name: Check service, protocol, comparison, and plugin boundaries
+        run: |
+          npm ci
+          npm run check
+      - name: Install CI Chromium
+        run: npx playwright install chromium
+      - name: Run the single UI golden scenario
+        env:
+          REW_UI_OUTPUT_DIR: ${{ runner.temp }}\runtime-ui-evidence
+          REW_PROTOCOL_FIXTURE: ${{ github.workspace }}\protocol\examples\workflow.case.code.json
+        run: npm run probe:ui
+      - name: Upload synthetic UI evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-ui-evidence
+          path: ${{ runner.temp }}\runtime-ui-evidence
+          if-no-files-found: warn

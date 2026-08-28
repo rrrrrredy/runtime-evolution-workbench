@@ -1,4 +1,4 @@
-import { mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -13,6 +13,7 @@ import { WorkbenchStore } from "../dist/server/store.js";
 const stamp = new Date().toISOString().replace(/[:.]/g, "-");
 const dataDir = resolve(process.env.REW_GATE_DATA_DIR ?? join(tmpdir(), `rew-product-gate-${stamp}`));
 const codexExecutable = process.env.CODEX_EXECUTABLE ?? "codex";
+const gateOutput = process.env.REW_GATE_OUTPUT;
 const config = {
   host: "127.0.0.1",
   port: 43119,
@@ -81,8 +82,25 @@ try {
     timeoutMs: 90_000
   });
   const managedDocument = exporter.export(managed.bundle.run.id);
+  const codexVersionProbe = spawnSync(codexExecutable, ["--version"], {
+    encoding: "utf8",
+    windowsHide: true
+  });
+  const commitProbe = spawnSync("git", ["rev-parse", "HEAD"], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+    windowsHide: true
+  });
+  const testedCommit = commitProbe.stdout.trim();
+  if (commitProbe.status !== 0 || !/^[0-9a-f]{40}$/.test(testedCommit)) {
+    throw new Error("Runtime product gate must run from a committed Git checkout");
+  }
   const result = {
-    dataDir,
+    product: "runtime-evolution-workbench",
+    version: "0.1.0",
+    nodeVersion: process.versions.node,
+    codexVersion: (codexVersionProbe.stdout || codexVersionProbe.stderr).trim(),
+    testedCommit,
     observed: {
       retained: true,
       ingestedFiles: ingestion.filter((entry) => entry.status === "ingested").length,
@@ -105,6 +123,24 @@ try {
     }
   };
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+  const gateFailures = [];
+  if (result.observed.ingestedFiles < 3) gateFailures.push("ordinary Hook lifecycle was not fully ingested");
+  if (result.observed.eventCount < 3) gateFailures.push("ordinary Run retained too few events");
+  if (!result.observed.hasAppServerGap) gateFailures.push("ordinary Run did not declare its App Server observation gap");
+  if (result.storedBackfill.available && !result.storedBackfill.mappingLossDeclared) {
+    gateFailures.push("stored Thread backfill did not declare mapping loss");
+  }
+  if (!result.managed.completed) gateFailures.push("managed Run did not complete");
+  if (!result.managed.exactResponse) gateFailures.push("managed Run did not return the exact objective response");
+  if (result.managed.eventCount < 2) gateFailures.push("managed Run retained too few structured events");
+  if (!result.managed.liveStructuredEvents) gateFailures.push("managed Run retained no live App Server events");
+  if (!result.managed.reasoningExclusionDeclared) gateFailures.push("managed Run did not declare the reasoning exclusion");
+  if (gateFailures.length > 0) {
+    throw new Error(`Runtime product gate failed: ${gateFailures.join("; ")}`);
+  }
+  if (gateOutput) {
+    writeFileSync(resolve(gateOutput), `${JSON.stringify(result, null, 2)}\n`, "utf8");
+  }
 } finally {
   store.close();
 }

@@ -1,0 +1,30 @@
+name: Product bug
+description: Report a capture, diagnosis, comparison, publication, rollback, or UI defect.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: User-visible problem
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Workbench, Codex, and Node versions
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal redacted reproduction
+      description: Never attach private repository content, credentials, or raw production Runs.
+    validations:
+      required: true
+  - type: textarea
+    id: boundary
+    attributes:
+      label: Observation gaps shown by the product
+    validations:
+      required: true

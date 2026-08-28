@@ -27,7 +27,8 @@
     "mcp": "node plugins/runtime-evolution-workbench/scripts/mcp-server.mjs",
     "test": "vitest run",
     "probe:observed": "node spikes/app-server-probe.mjs",
-    "probe:managed": "node spikes/managed-run-probe.mjs"
+    "probe:managed": "node spikes/managed-run-probe.mjs",
+    "probe:ui": "node spikes/ui-synthetic-probe.mjs"
   },
   "dependencies": {
     "@agent-run-protocol/core": "git+https://github.com/rrrrrredy/agent-run-protocol.git#c7c6ef759bf333b9e986b4300d763c4e4c8f657a",
@@ -47,6 +48,7 @@
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.5",
     "@vitejs/plugin-react": "6.1.1",
+    "playwright": "1.62.1",
     "tsx": "4.23.12",
     "typescript": "7.0.2",
     "vite": "8.2.2",

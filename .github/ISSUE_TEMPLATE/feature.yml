@@ -1,0 +1,25 @@
+name: Feature request
+description: Propose a user-visible improvement without weakening the evidence boundary.
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+    validations:
+      required: true
+  - type: textarea
+    id: closure
+    attributes:
+      label: Smallest useful closure
+      description: Describe what the user can do that is impossible today.
+    validations:
+      required: true
+  - type: textarea
+    id: authority
+    attributes:
+      label: Data and authority impact
+      description: State what new data is read, stored, executed, or modified.
+    validations:
+      required: true

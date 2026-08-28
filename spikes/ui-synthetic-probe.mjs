@@ -10,11 +10,13 @@ import { WorkbenchStore } from "../dist/server/store.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const dataDir = mkdtempSync(join(tmpdir(), "rew-synthetic-ui-"));
-const outputDir = join(root, "docs", "images");
+const outputDir = resolve(process.env.REW_UI_OUTPUT_DIR ?? join(root, "docs", "images"));
 const port = Number.parseInt(process.env.REW_SYNTHETIC_PORT ?? "43139", 10);
 const require = createRequire(import.meta.url);
 const playwrightModule = process.env.REW_PLAYWRIGHT_MODULE ?? "playwright";
 const { chromium } = require(playwrightModule);
+const browserChannel = process.env.REW_BROWSER_CHANNEL;
+const protocolFixture = process.env.REW_PROTOCOL_FIXTURE;
 mkdirSync(outputDir, { recursive: true });
 
 function addSyntheticRun(store, input) {
@@ -130,7 +132,7 @@ let browser;
 try {
   await waitForHealth();
   const token = readFileSync(join(dataDir, "session-token"), "utf8").trim();
-  browser = await chromium.launch({ channel: "msedge", headless: true });
+  browser = await chromium.launch({ headless: true, ...(browserChannel ? { channel: browserChannel } : {}) });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   const browserErrors = [];
   page.on("console", (message) => { if (message.type() === "error") browserErrors.push(message.text()); });
@@ -141,6 +143,14 @@ try {
   const runCount = await page.locator(".run-row").count();
   const gapCount = await page.locator(".gap-row").count();
   const syntheticCopyVisible = await page.getByText(/Synthetic example:/).isVisible();
+  let protocolImportCount = null;
+  if (protocolFixture) {
+    await page.getByRole("button", { name: "Open protocol library" }).click();
+    await page.locator('.protocol-modal input[type="file"]').setInputFiles(protocolFixture);
+    await page.getByText("workflow.case.v1", { exact: true }).waitFor();
+    protocolImportCount = await page.locator(".protocol-list article").count();
+    await page.getByRole("button", { name: "Close protocol library" }).click();
+  }
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: "networkidle" });
@@ -150,15 +160,30 @@ try {
     viewport: document.documentElement.clientWidth,
     scrollWidth: document.documentElement.scrollWidth
   }));
-  process.stdout.write(`${JSON.stringify({
+  const result = {
     data: "fully synthetic",
     runCount,
     gapCount,
     syntheticCopyVisible,
+    protocolImportCount,
     noHorizontalOverflow: overflow.scrollWidth <= overflow.viewport,
     browserErrors,
-    outputs: ["docs/images/ui-desktop-runs-synthetic.png", "docs/images/ui-mobile-menu-synthetic.png"]
-  }, null, 2)}\n`);
+    outputs: [
+      join(outputDir, "ui-desktop-runs-synthetic.png"),
+      join(outputDir, "ui-mobile-menu-synthetic.png")
+    ]
+  };
+  process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+  if (
+    result.runCount !== 3
+    || result.gapCount < 1
+    || !result.syntheticCopyVisible
+    || (protocolFixture && result.protocolImportCount !== 1)
+    || !result.noHorizontalOverflow
+    || result.browserErrors.length > 0
+  ) {
+    throw new Error("Synthetic Runtime UI acceptance failed");
+  }
 } finally {
   if (browser) await browser.close();
   if (server.exitCode === null) {
