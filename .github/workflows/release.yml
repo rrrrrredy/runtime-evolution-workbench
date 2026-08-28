@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   release:
-    runs-on: windows-latest
+    runs-on: windows-2025
     defaults:
       run:
         shell: pwsh
@@ -29,7 +29,7 @@ jobs:
           path: protocol
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '22'
+          node-version: '22.23.2'
           cache: npm
           cache-dependency-path: product/package-lock.json
       - name: Verify locally produced real product evidence
