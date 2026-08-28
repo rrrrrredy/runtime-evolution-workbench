@@ -1,0 +1,55 @@
+{
+  "name": "runtime-evolution-workbench",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local-first Codex run capture, diagnosis, and capability evolution workbench.",
+  "license": "Apache-2.0",
+  "author": "Song Luo",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rrrrrredy/runtime-evolution-workbench.git"
+  },
+  "bugs": "https://github.com/rrrrrredy/runtime-evolution-workbench/issues",
+  "homepage": "https://github.com/rrrrrredy/runtime-evolution-workbench#readme",
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0 <23"
+  },
+  "scripts": {
+    "build": "pwsh -NoProfile -File scripts/Build.ps1",
+    "build:server": "tsc -p tsconfig.server.json",
+    "build:web": "tsc -p tsconfig.web.json --noEmit && vite build",
+    "check": "pwsh -NoProfile -File scripts/Check.ps1",
+    "dev": "tsx src/dev.ts",
+    "dev:server": "tsx watch src/server/index.ts",
+    "dev:web": "vite",
+    "start": "node dist/server/index.js",
+    "mcp": "node plugins/runtime-evolution-workbench/scripts/mcp-server.mjs",
+    "test": "vitest run",
+    "probe:observed": "node spikes/app-server-probe.mjs",
+    "probe:managed": "node spikes/managed-run-probe.mjs"
+  },
+  "dependencies": {
+    "@agent-run-protocol/core": "git+https://github.com/rrrrrredy/agent-run-protocol.git#c7c6ef759bf333b9e986b4300d763c4e4c8f657a",
+    "@fastify/cookie": "11.1.2",
+    "@fastify/static": "10.1.3",
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "diff": "9.0.0",
+    "fastify": "5.12.1",
+    "lucide-react": "1.35.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/diff": "8.0.0",
+    "@types/node": "22.20.1",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.5",
+    "@vitejs/plugin-react": "6.1.1",
+    "tsx": "4.23.12",
+    "typescript": "7.0.2",
+    "vite": "8.2.2",
+    "vitest": "4.1.11"
+  }
+}

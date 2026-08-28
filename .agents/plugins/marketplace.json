@@ -1,0 +1,20 @@
+{
+  "name": "runtime-evolution-workbench",
+  "interface": {
+    "displayName": "Runtime Evolution Workbench"
+  },
+  "plugins": [
+    {
+      "name": "runtime-evolution-workbench",
+      "source": {
+        "source": "local",
+        "path": "./plugins/runtime-evolution-workbench"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

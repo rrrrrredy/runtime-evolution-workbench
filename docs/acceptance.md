@@ -1,0 +1,36 @@
+# Release acceptance
+
+Passing a build is not product acceptance. Version 0.1 may be labeled stable only after the following is reproduced on a fresh Windows 11 environment and the evidence is attached to the release.
+
+## Golden closure
+
+1. Install from the public repository and restart Codex.
+2. Produce one real Codex failure in a disposable Git repository with an `AGENTS.md` or one Skill.
+3. Confirm the ordinary Run, result, correction, structured events, and at least one explicit observation boundary are retained locally.
+4. Create an evidence-backed Issue and a one-file proposal using that failure Run and a distinct protection Run.
+5. Run the failure and protection cases once against baseline and candidate in four isolated worktrees.
+6. Confirm the objective verifier matrix supports the candidate while the UI still labels it single-run evidence.
+7. Approve and publish manually. Verify the exact target diff and digest.
+8. Roll back successfully while the candidate is unchanged.
+9. Publish again, edit the target outside the product, and confirm rollback produces a conflict without overwriting the edit.
+10. Export the Run as a valid `agent.run.v1` document and validate it with Agent Run Protocol.
+
+## Necessary failures
+
+- Delete or delay one Hook envelope and confirm a missing/out-of-order gap remains visible.
+- Make App Server unavailable and confirm ordinary retained Runs remain usable while backfill/managed actions fail explicitly.
+- Stop the service during a Run/comparison and confirm startup recovery marks evidence incomplete/inconclusive.
+- Put representative bearer/API/GitHub/private-key values in Hook fixtures and confirm pre-spool and pre-storage redaction.
+- Force a Codex timeout and a verifier timeout; confirm they are not labeled task failures.
+- Force Git worktree cleanup failure; confirm infrastructure status and cleanup evidence.
+- Modify the target capability file between proposal, publish, and rollback; confirm hash-safe conflict behavior.
+
+## Installation and removal
+
+- Verify the installer reports every state change and the product binds only to loopback.
+- Verify restart/startup behavior with and without `-EnableStartup`.
+- Uninstall and confirm the plugin, marketplace entry, Startup shortcut, and service process are absent.
+- Confirm Run data is preserved by default and removed only with an explicit, path-safe `-DeleteData` run.
+- Confirm neither Workflow Environment Factory nor Agent Run Protocol must be running for the product to work.
+
+Record the OS, Codex version, Node version, commit, commands, objective verifier outputs, exported protocol documents, screenshots, known limitations, and uninstall evidence. Do not substitute mocks or unit tests for this clean-environment report.

@@ -1,0 +1,19 @@
+{
+  "name": "runtime-evolution-workbench",
+  "version": "0.1.0",
+  "description": "Capture Codex Runs locally and turn failures and corrections into evidence-backed AGENTS.md or Skill experiments.",
+  "author": {
+    "name": "Song Luo"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Runtime Evolution Workbench",
+    "shortDescription": "Save, diagnose, compare, and safely evolve Codex Runs.",
+    "longDescription": "Adds local lifecycle capture, evidence tools, and a bounded evolution workflow. Ordinary Runs remain usable when the workbench is closed; changes are always reviewable and require human approval.",
+    "developerName": "Song Luo",
+    "category": "Productivity",
+    "capabilities": ["Run capture", "Failure diagnosis", "AGENTS and Skill experiments"],
+    "defaultPrompt": "Use Runtime Evolution Workbench evidence to inspect this Codex Run. State observation gaps before proposing any AGENTS.md or Skill change."
+  },
+  "mcpServers": "./.mcp.json"
+}
