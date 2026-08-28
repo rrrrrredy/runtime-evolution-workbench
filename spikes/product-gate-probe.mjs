@@ -173,6 +173,7 @@ try {
     "-c", "user.email=runtime-evolution-gate@example.invalid",
     "commit", "-m", "release gate fixture"
   ]);
+  await adapter.preflightManagedWorkspace(repository);
 
   const failureSeed = await runSeed(
     "failure",
@@ -306,6 +307,7 @@ try {
       mappingLossDeclared: backfill.mappingLossDeclared
     },
     managed: {
+      sourceWorkspacePreflight: true,
       runCount: managedRunIds.length,
       allCompleted: managedRuns.every((run) => run?.status === "completed"),
       minimumEventCount: Math.min(...managedDocuments.map((document) => document.events.length)),
@@ -353,6 +355,7 @@ try {
   if (!result.observed.hasAppServerGap) gateFailures.push("ordinary Run did not declare its App Server observation gap");
   if (result.storedBackfill.available && !result.storedBackfill.mappingLossDeclared) gateFailures.push("stored Thread backfill did not declare mapping loss");
   if (result.managed.runCount !== 6) gateFailures.push("the evolution closure did not retain exactly six real managed Runs");
+  if (!result.managed.sourceWorkspacePreflight) gateFailures.push("the bounded App Server workspace preflight did not pass");
   if (!result.managed.allCompleted) gateFailures.push("at least one managed Run did not complete");
   if (result.managed.minimumEventCount < 2) gateFailures.push("at least one managed Run retained too few structured events");
   if (!result.managed.allHaveLiveStructuredEvents) gateFailures.push("at least one managed Run retained no live App Server events");

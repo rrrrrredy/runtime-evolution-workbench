@@ -1,3 +1,7 @@
+import { randomUUID } from "node:crypto";
+import { existsSync, readFileSync, realpathSync, unlinkSync } from "node:fs";
+import { join, resolve } from "node:path";
+
 import { stableUuid } from "../../shared/ids.js";
 import type { RunStatus, StoredRun } from "../../shared/types.js";
 import { ContentStore } from "../content-store.js";
@@ -81,6 +85,33 @@ export interface ManagedRunRequest {
 export interface ManagedRunResult {
   bundle: RunBundle;
   agentMessage: string;
+}
+
+export function buildManagedWorkspaceSettings(input: Pick<ManagedRunRequest, "cwd" | "sandbox">) {
+  const workspaceRoot = realpathSync.native(resolve(input.cwd));
+  const sandbox = input.sandbox ?? "read-only";
+  const sandboxPolicy = sandbox === "workspace-write"
+    ? {
+        type: "workspaceWrite" as const,
+        writableRoots: [workspaceRoot],
+        networkAccess: false as const
+      }
+    : {
+        type: "readOnly" as const,
+        networkAccess: false as const
+      };
+  return {
+    workspaceRoot,
+    threadStart: {
+      cwd: workspaceRoot,
+      runtimeWorkspaceRoots: [workspaceRoot],
+      sandbox
+    },
+    turnStart: {
+      cwd: workspaceRoot,
+      sandboxPolicy
+    }
+  };
 }
 
 export class CodexAppServerAdapter {
@@ -242,8 +273,20 @@ export class CodexAppServerAdapter {
     }
   }
 
+  async preflightManagedWorkspace(cwd: string): Promise<void> {
+    const client = new CodexAppServerClient(this.executable);
+    const workspace = buildManagedWorkspaceSettings({ cwd, sandbox: "workspace-write" });
+    try {
+      await client.start();
+      await this.#preflightWorkspaceWrite(client, workspace.workspaceRoot, workspace.turnStart.sandboxPolicy);
+    } finally {
+      await client.close();
+    }
+  }
+
   async runManaged(input: ManagedRunRequest): Promise<ManagedRunResult> {
     const client = new CodexAppServerClient(this.executable);
+    const workspace = buildManagedWorkspaceSettings(input);
     let runId: string | null = null;
     let threadId: string | null = null;
     let turnId: string | null = null;
@@ -303,10 +346,12 @@ export class CodexAppServerAdapter {
 
     try {
       await client.start();
+      if (workspace.threadStart.sandbox === "workspace-write") {
+        await this.#preflightWorkspaceWrite(client, workspace.workspaceRoot, workspace.turnStart.sandboxPolicy);
+      }
       const threadResponse = await client.request<JsonObject>("thread/start", {
-        cwd: input.cwd,
+        ...workspace.threadStart,
         approvalPolicy: "never",
-        sandbox: input.sandbox ?? "read-only",
         ephemeral: false,
         historyMode: "paginated",
         threadSource: "runtime-evolution-workbench"
@@ -321,7 +366,7 @@ export class CodexAppServerAdapter {
         mode: "managed",
         status: "running",
         goal: input.prompt,
-        cwd: input.cwd,
+        cwd: workspace.workspaceRoot,
         model: input.model ?? null,
         agentVersion: stringValue(thread.cliVersion),
         startedAt: isoFromUnixSeconds(thread.createdAt),
@@ -341,6 +386,7 @@ export class CodexAppServerAdapter {
       const turnResponse = await client.request<JsonObject>("turn/start", {
         threadId,
         input: [{ type: "text", text: input.prompt }],
+        ...workspace.turnStart,
         effort: input.effort ?? "low",
         ...(input.model === undefined ? {} : { model: input.model })
       }, 30_000);
@@ -385,6 +431,45 @@ export class CodexAppServerAdapter {
     } finally {
       unsubscribe();
       await client.close();
+    }
+  }
+
+  async #preflightWorkspaceWrite(
+    client: CodexAppServerClient,
+    workspaceRoot: string,
+    sandboxPolicy: { type: "workspaceWrite"; writableRoots: string[]; networkAccess: false } | { type: "readOnly"; networkAccess: false }
+  ): Promise<void> {
+    if (sandboxPolicy.type !== "workspaceWrite") return;
+    const sentinelPath = join(workspaceRoot, `.runtime-evolution-preflight-${randomUUID()}`);
+    try {
+      const response = await client.request<JsonObject>("command/exec", {
+        command: [
+          process.execPath,
+          "-e",
+          "require('node:fs').writeFileSync(process.argv[1], 'ok')",
+          sentinelPath
+        ],
+        cwd: workspaceRoot,
+        sandboxPolicy,
+        timeoutMs: 15_000
+      }, 30_000);
+      const exitCode = numberValue(response.exitCode);
+      if (exitCode !== 0) {
+        throw new AppServerError(`Managed workspace preflight failed before model execution (exit ${String(exitCode)}).`);
+      }
+      if (!existsSync(sentinelPath) || readFileSync(sentinelPath, "utf8") !== "ok") {
+        throw new AppServerError("Managed workspace preflight reported success without the expected bounded write.");
+      }
+    } finally {
+      if (existsSync(sentinelPath)) {
+        try {
+          unlinkSync(sentinelPath);
+        } catch (error) {
+          throw new AppServerError(
+            `Managed workspace preflight could not remove its sentinel: ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
+      }
     }
   }
 }

@@ -1,6 +1,8 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { createInterface } from "node:readline";
 
+import { redactUnknown } from "../redaction.js";
+
 type JsonObject = Record<string, unknown>;
 type NotificationHandler = (method: string, params: JsonObject) => void;
 
@@ -12,6 +14,14 @@ interface PendingRequest {
 
 function isObject(value: unknown): value is JsonObject {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export function describeAppServerFailure(value: unknown): string {
+  const redacted = redactUnknown(value, { maxStringLength: 2_000 }).value;
+  if (isObject(redacted) && typeof redacted.message === "string" && redacted.message.length > 0) {
+    return redacted.message;
+  }
+  return "unknown server error";
 }
 
 export class AppServerError extends Error {
@@ -136,7 +146,7 @@ export class CodexAppServerClient {
       clearTimeout(pending.timeout);
       this.#pending.delete(message.id);
       if ("error" in message) {
-        pending.reject(new AppServerError(`App Server request failed`, message.error));
+        pending.reject(new AppServerError(`App Server request failed: ${describeAppServerFailure(message.error)}`, message.error));
       } else {
         pending.resolve(message.result);
       }

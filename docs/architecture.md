@@ -27,6 +27,7 @@ The plugin is a distribution and capture edge. The local service is the product.
 ## Codex 0.150.0-alpha.8 findings
 
 - Direct stdio App Server works on Windows.
+- Managed Runs canonicalize the requested checkout, declare it as the only runtime workspace root, repeat that exact root in the turn-level offline `workspaceWrite` policy, and run a sandboxed no-model write preflight before spending a model turn.
 - Managed daemon lifecycle commands report Unix-only support on Windows.
 - `thread/list` and `thread/read` can access stored ordinary sessions through a new App Server process.
 - Stored thread/turn items are documented as lossy; live managed capture remains the stronger evidence source.

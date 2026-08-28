@@ -46,6 +46,8 @@ Requirements:
 - a working Codex CLI/Desktop installation with `codex` on `PATH`;
 - PowerShell 7 recommended.
 
+Install and start the long-lived service from a normal Windows Terminal or PowerShell session, not from a command that is already inside a Codex sandbox. Managed comparisons deliberately fail their no-model workspace preflight rather than falling back to unsandboxed execution.
+
 Download `runtime-evolution-workbench-0.1.0.zip` and its `.sha256` file from the same GitHub Release. Verify the archive, extract it, inspect the installer, then run:
 
 ```powershell

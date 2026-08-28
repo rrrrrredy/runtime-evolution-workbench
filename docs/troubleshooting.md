@@ -47,9 +47,15 @@ Do not stop an unknown process merely because it owns the port. The bundled stop
 
 Run `codex app-server --help` and confirm Codex itself starts. Backfill depends on the installed Codex App Server protocol and is explicitly version-probed. Ordinary Hook capture and retained Runs remain usable when App Server is unavailable.
 
+## Managed Runs fail the workspace preflight
+
+The product runs a bounded `command/exec` write/read/delete probe through the same App Server `workspaceWrite` policy before it spends a model turn. If it reports a Windows sandbox or ACL error, no Agent task was started and the comparison must remain infrastructure-inconclusive.
+
+Start the workbench service from an ordinary Windows Terminal or PowerShell session, not from a shell that is itself already running inside a Codex sandbox. Confirm `[windows] sandbox = "elevated"` is set up successfully, or use the official `unelevated` fallback while the machine policy is investigated. Review `CODEX_HOME\.sandbox\sandbox.log` for setup, logon-right, or filesystem-permission errors. Do not switch the workbench to `danger-full-access` or App Server `externalSandbox` merely to make a comparison pass; this product does not provide a second OS sandbox.
+
 ## A comparison is inconclusive
 
-Inspect all four cells. An absent objective result, Codex timeout/crash, verifier error/timeout, or cleanup failure prevents an improvement claim. Fix the infrastructure or verifier and create a new comparison; do not reinterpret an infrastructure failure as a task failure.
+Inspect all four cells. An absent objective result, Codex timeout/crash, workspace preflight failure, verifier error/timeout, or cleanup failure prevents an improvement claim. Fix the infrastructure or verifier and create a new comparison; do not reinterpret an infrastructure failure as a task failure.
 
 ## Publish or rollback reports a conflict
 

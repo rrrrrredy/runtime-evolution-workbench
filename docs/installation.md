@@ -4,6 +4,8 @@
 
 Version 0.1 targets Windows 11, Node 22.x, Git, PowerShell, and a Codex installation that provides the plugin CLI and App Server used by this release. Node 20 cannot run the product because the local store uses Node 22's built-in SQLite API.
 
+Run installation and the long-lived workbench service from a normal Windows Terminal or PowerShell session. A service launched from inside an already sandboxed Codex command inherits an outer OS permission boundary that a nested App Server cannot repair; observed Run capture still works, but managed comparisons will fail their no-model workspace preflight instead of silently broadening access.
+
 ## Install from a checkout
 
 ```powershell

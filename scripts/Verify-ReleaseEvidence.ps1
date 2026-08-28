@@ -27,6 +27,7 @@ try {
     ([int]$evidence.observed.eventCount -ge 3),
     [bool]$evidence.observed.hasAppServerGap,
     (-not [bool]$evidence.storedBackfill.available -or [bool]$evidence.storedBackfill.mappingLossDeclared),
+    [bool]$evidence.managed.sourceWorkspacePreflight,
     ([int]$evidence.managed.runCount -eq 6),
     [bool]$evidence.managed.allCompleted,
     ([int]$evidence.managed.minimumEventCount -ge 2),
