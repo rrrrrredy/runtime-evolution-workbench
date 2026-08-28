@@ -39,6 +39,6 @@ The tag workflow verifies that:
 4. the evidence file is the only change after the tested commit;
 5. the evidence uses `product.runtime-evolution-gate.v2` and proves the complete failure-to-safe-rollback closure rather than an exact-response smoke test.
 
-It then repeats offline checks and the UI gate, creates a Windows archive containing reviewed source plus compiled server/UI, verifies required files, emits a commit-bound manifest and SHA-256, attaches build provenance, and publishes the GitHub Release.
+It then repeats offline checks and the UI gate, creates a Windows archive containing reviewed source plus compiled server/UI, verifies required files, emits a commit-bound manifest and SHA-256, attaches build provenance, and publishes a GitHub prerelease using the version-matched notes under `docs/releases/`. A missing notes file blocks publication; an automatically generated commit summary is not accepted as the product release page.
 
 Fresh Windows installation, user-visible UI review, uninstall, and no-residue evidence remain the final stable-release gate. The authenticated code-freeze evidence proves the same core closure through the product services; it does not substitute for clean-machine installation or human UI acceptance.
