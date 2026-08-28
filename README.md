@@ -44,19 +44,25 @@ Requirements:
 - a working Codex CLI/Desktop installation with `codex` on `PATH`;
 - PowerShell 7 recommended.
 
-Clone the repository, inspect the installer, then run:
+Download `runtime-evolution-workbench-0.1.0.zip` and its `.sha256` file from the same GitHub Release. Verify the archive, extract it, inspect the installer, then run:
+
+```powershell
+$archive = '.\runtime-evolution-workbench-0.1.0.zip'
+$expected = (Get-Content "$archive.sha256").Split()[0]
+$actual = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+if ($actual -ne $expected) { throw 'Runtime Evolution Workbench archive checksum mismatch.' }
+Expand-Archive $archive -DestinationPath .
+Set-Location runtime-evolution-workbench-0.1.0
+.\scripts\Install.ps1 -Open
+```
+
+The same release contains a commit-bound manifest and GitHub build-provenance attestation. Add `-EnableStartup` only if you want the local service to start when the current Windows user signs in. The installer runs the complete release check, registers this checkout as a Codex marketplace, installs the plugin, and starts the loopback-only service. Restart Codex after installation.
+
+For source development or a portable Node build, clone the repository and set the executable explicitly:
 
 ```powershell
 git clone https://github.com/rrrrrredy/runtime-evolution-workbench.git
 Set-Location runtime-evolution-workbench
-.\scripts\Install.ps1 -Open
-```
-
-Add `-EnableStartup` only if you want the local service to start when the current Windows user signs in. The installer runs the complete release check, registers this checkout as a Codex marketplace, installs the plugin, and starts the loopback-only service. Restart Codex after installation.
-
-For development or a portable Node build, set the executable explicitly:
-
-```powershell
 $env:REW_NODE = 'D:\path\to\node-v22\node.exe'
 .\scripts\Check.ps1 -InstallDependencies
 .\scripts\Start.ps1 -Open
