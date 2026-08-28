@@ -1,4 +1,4 @@
-import { ProtocolValidator } from "@agent-run-protocol/core";
+import { ProtocolValidator } from "@runcase/interchange";
 
 import type { StoredEvent, StoredRun } from "../shared/types.js";
 import { WorkbenchStore } from "./store.js";

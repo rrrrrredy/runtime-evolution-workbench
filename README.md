@@ -110,7 +110,7 @@ The uninstaller verifies the resolved path and refuses broad locations before re
 - React/Vite workbench served by the local service;
 - separate Codex plugin with Hooks, raw-stdio MCP, and a Skill;
 - version-probed Codex App Server adapter for stored-thread backfill and managed Runs;
-- `@agent-run-protocol/core` as the only cross-product dependency.
+- `@runcase/interchange` from an exact checksummed GitHub Release asset as the only cross-product dependency.
 
 Runtime Evolution Workbench does not share its service, database, queue, UI, executor, or business code with Workflow Environment Factory. See [architecture](docs/architecture.md).
 The exact portable-file boundary is documented in [protocol interoperability](docs/protocol.md).

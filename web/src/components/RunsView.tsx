@@ -313,7 +313,7 @@ function ProtocolLibrary({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <section className="modal protocol-modal" role="dialog" aria-modal="true" aria-label="Agent Run Protocol library">
+      <section className="modal protocol-modal" role="dialog" aria-modal="true" aria-label="RunCase Interchange library">
         <header>
           <div><div className="eyebrow">Portable evidence</div><h2>Protocol library</h2></div>
           <button className="icon-button" onClick={onClose} aria-label="Close protocol library"><X size={18} /></button>

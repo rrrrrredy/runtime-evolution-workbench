@@ -10,6 +10,7 @@ if ($LASTEXITCODE -ne 0) { throw "Build failed." }
 $node = Resolve-RewNode
 $vitest = Join-Path $script:RewRoot "node_modules\vitest\vitest.mjs"
 $pluginValidator = Join-Path $PSScriptRoot "validate-plugin.mjs"
+$releaseDependencyValidator = Join-Path $PSScriptRoot "validate-release-dependencies.mjs"
 
 Push-Location $script:RewRoot
 try {
@@ -17,6 +18,8 @@ try {
   if ($LASTEXITCODE -ne 0) { throw "Test suite failed." }
   & $node $pluginValidator
   if ($LASTEXITCODE -ne 0) { throw "Plugin validation failed." }
+  & $node $releaseDependencyValidator
+  if ($LASTEXITCODE -ne 0) { throw "Release dependency validation failed." }
 } finally {
   Pop-Location
 }

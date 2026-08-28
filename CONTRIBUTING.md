@@ -26,7 +26,7 @@ The full check must pass. Add a regression case for behavior changes. UI changes
 - No overwrite when the current file hash differs.
 - Infrastructure failures remain distinct from task failures.
 - The product stays loopback-only and local-first.
-- Workflow Environment Factory may depend on Agent Run Protocol, but it may not share this service, database, UI, or executor.
+- Workflow Environment Factory may depend on RunCase Interchange, but it may not share this service, database, UI, or executor.
 
 ## Pull requests
 

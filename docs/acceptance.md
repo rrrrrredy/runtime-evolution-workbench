@@ -13,7 +13,7 @@ Passing a build is not product acceptance. Version 0.1 may be labeled stable onl
 7. Approve and publish manually. Verify the exact target diff and digest.
 8. Roll back successfully while the candidate is unchanged.
 9. Publish again, edit the target outside the product, and confirm rollback produces a conflict without overwriting the edit.
-10. Export the Run as a valid `agent.run.v1` document and validate it with Agent Run Protocol.
+10. Export the Run as a valid `agent.run.v1` document and validate it with RunCase Interchange.
 11. Import one Factory `workflow.case.v1` and its `workflow.score.v1`; confirm both remain read-only, survive restart, and do not require the Factory service.
 
 ## Necessary failures
@@ -32,7 +32,7 @@ Passing a build is not product acceptance. Version 0.1 may be labeled stable onl
 - Verify restart/startup behavior with and without `-EnableStartup`.
 - Uninstall and confirm the plugin, marketplace entry, Startup shortcut, and service process are absent.
 - Confirm Run data is preserved by default and removed only with an explicit, path-safe `-DeleteData` run.
-- Confirm neither Workflow Environment Factory nor Agent Run Protocol must be running for the product to work.
+- Confirm neither Workflow Environment Factory nor RunCase Interchange must be running for the product to work.
 
 The repeatable clean-user lifecycle portion is encoded in `scripts\Acceptance-InstallUninstall.ps1` and runs on a fresh GitHub-hosted Windows VM. The real Codex failure-to-safe-evolution closure remains a separate authenticated, locally produced release gate; neither result substitutes for the other.
 

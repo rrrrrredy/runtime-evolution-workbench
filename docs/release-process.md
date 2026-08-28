@@ -4,10 +4,12 @@ A green build is not a Runtime Evolution Workbench release.
 
 ## Fixed release inputs
 
-- Agent Run Protocol: `v0.1.0`.
+- RunCase Interchange: `v0.1.0`.
 - Node.js: 22.x.
 - Codex CLI used by the real App Server gate: `0.150.0-alpha.8`.
 - The real gate uses the maintainer's existing local Codex authentication. No model credential is stored in GitHub.
+
+`scripts/Check.ps1` also enforces that RunCase Interchange comes from the exact HTTPS GitHub Release asset with the expected SHA-512 lock integrity. A Git, SSH, mutable branch, or unpinned source fails the release.
 
 ## Pull-request gate
 

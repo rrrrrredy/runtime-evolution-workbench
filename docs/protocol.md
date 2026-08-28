@@ -1,6 +1,6 @@
 # Protocol interoperability
 
-Agent Run Protocol is the only shared component between Runtime Evolution Workbench and Workflow Environment Factory. The products do not share a database, service, queue, UI, executor, or product code.
+RunCase Interchange is the only shared component between Runtime Evolution Workbench and Workflow Environment Factory. The products do not share a database, service, queue, UI, executor, or product code.
 
 ## Export
 

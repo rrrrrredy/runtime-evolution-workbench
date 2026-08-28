@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { ProtocolValidator } from "@agent-run-protocol/core";
+import { ProtocolValidator } from "@runcase/interchange";
 import { describe, expect, it } from "vitest";
 
 import type { HookEnvelope } from "../shared/types.js";

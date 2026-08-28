@@ -77,7 +77,7 @@ try {
     schema_version = "runtime-evolution-workbench.release.v1"
     version = $Version
     commit = $commit
-    protocol_dependency = [string]$package.dependencies.'@agent-run-protocol/core'
+    protocol_dependency = [string]$package.dependencies.'@runcase/interchange'
     archive = [ordered]@{
       file = [System.IO.Path]::GetFileName($archivePath)
       sha256 = $checksum

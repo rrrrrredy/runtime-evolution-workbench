@@ -3,7 +3,7 @@ import {
   ProtocolValidator,
   type ProtocolValidationError,
   type SchemaVersion
-} from "@agent-run-protocol/core";
+} from "@runcase/interchange";
 
 import { newId, sha256 } from "../shared/ids.js";
 import type { ProtocolDocumentRecord } from "../shared/types.js";
