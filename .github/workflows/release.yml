@@ -6,13 +6,15 @@ on:
       - 'v*'
 
 permissions:
-  contents: write
-  id-token: write
-  attestations: write
+  contents: read
 
 jobs:
   release:
     runs-on: windows-2025
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
     defaults:
       run:
         shell: pwsh
@@ -40,10 +42,6 @@ jobs:
         run: |
           npm ci
           npm run check
-      - name: Install pinned Codex CLI for clean lifecycle acceptance
-        run: npm install --global @openai/codex@0.150.0-alpha.8
-      - name: Verify release installation lifecycle
-        run: .\scripts\Acceptance-InstallUninstall.ps1 -EvidencePath (Join-Path $env:GITHUB_WORKSPACE "runtime-installation-evidence.json")
       - name: Run release UI gate
         env:
           REW_UI_OUTPUT_DIR: ${{ runner.temp }}\runtime-ui-evidence
@@ -56,7 +54,25 @@ jobs:
           $version = "${{ github.ref_name }}".TrimStart("v")
           .\scripts\Package-Release.ps1 -Version $version -OutputDirectory (Join-Path $env:GITHUB_WORKSPACE "artifacts")
           Copy-Item -LiteralPath ".\release-evidence\runtime-product-gate-$version.json" -Destination (Join-Path $env:GITHUB_WORKSPACE "artifacts") -Force
-          Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE "runtime-installation-evidence.json") -Destination (Join-Path $env:GITHUB_WORKSPACE "artifacts") -Force
+      - name: Install pinned Codex CLI for archive lifecycle acceptance
+        run: npm install --global @openai/codex@0.150.0-alpha.8
+      - name: Verify the extracted release archive lifecycle
+        working-directory: ${{ github.workspace }}
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          $archive = Join-Path $env:GITHUB_WORKSPACE "artifacts\runtime-evolution-workbench-$version.zip"
+          $expected = (Get-Content "$archive.sha256").Split()[0]
+          $actual = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $expected) { throw "Release archive checksum mismatch before acceptance." }
+          $extractRoot = Join-Path $env:RUNNER_TEMP "runtime-release-install"
+          New-Item -ItemType Directory -Path $extractRoot -Force | Out-Null
+          Expand-Archive -LiteralPath $archive -DestinationPath $extractRoot
+          $releaseRoot = Join-Path $extractRoot "runtime-evolution-workbench-$version"
+          $evidencePath = Join-Path $env:GITHUB_WORKSPACE "artifacts\runtime-installation-evidence.json"
+          & (Join-Path $releaseRoot "scripts\Acceptance-InstallUninstall.ps1") -EvidencePath $evidencePath
+          $evidence = Get-Content -LiteralPath $evidencePath -Raw | ConvertFrom-Json
+          if ($evidence.source_kind -ne "release_archive") { throw "Acceptance did not run from the release archive." }
+          if ($evidence.tested_commit -ne $env:GITHUB_SHA) { throw "Archive commit does not match the release tag commit." }
       - name: Attest release evidence
         uses: actions/attest-build-provenance@43d14bc2b83dec42d39ecae14e916627a18bb661 # v3
         with:
@@ -71,4 +87,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${{ github.ref_name }}" (Get-ChildItem artifacts -File | ForEach-Object FullName) --verify-tag --generate-notes --title "Runtime Evolution Workbench ${{ github.ref_name }}"
+          gh release create "${{ github.ref_name }}" (Get-ChildItem artifacts -File | ForEach-Object FullName) --repo "${{ github.repository }}" --verify-tag --generate-notes --title "Runtime Evolution Workbench ${{ github.ref_name }}"
