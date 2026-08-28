@@ -34,7 +34,6 @@ try {
   New-Item -ItemType Directory -Path $gateRoot -Force | Out-Null
   $resolvedGateRoot = (Resolve-Path -LiteralPath $gateRoot).Path
   $gateData = Join-Path $resolvedGateRoot "rew-release-gate-$([Guid]::NewGuid().ToString('N'))"
-  New-Item -ItemType Directory -Path $gateData | Out-Null
   $previousData = [Environment]::GetEnvironmentVariable("REW_GATE_DATA_DIR", "Process")
   $previousOutput = [Environment]::GetEnvironmentVariable("REW_GATE_OUTPUT", "Process")
   try {

@@ -21,6 +21,8 @@ try {
   if ($LASTEXITCODE -ne 0) { throw "Plugin validation failed." }
   & $node $releaseDependencyValidator
   if ($LASTEXITCODE -ne 0) { throw "Release dependency validation failed." }
+  & (Join-Path $PSScriptRoot "Test-InstallationSafety.ps1")
+  if ($LASTEXITCODE -ne 0) { throw "Installation safety validation failed." }
   & $node --check $productGateProbe
   if ($LASTEXITCODE -ne 0) { throw "Product-gate probe syntax validation failed." }
 } finally {

@@ -2,3 +2,9 @@ Runtime Evolution Workbench
 Copyright 2026 Song Luo
 
 This product is licensed under the Apache License, Version 2.0.
+
+This product includes aggregate JSON Schema snapshots generated from
+OpenAI Codex codex-cli 0.150.0-alpha.8.
+Copyright 2025 OpenAI.
+OpenAI Codex is licensed under the Apache License, Version 2.0.
+Source: https://github.com/openai/codex

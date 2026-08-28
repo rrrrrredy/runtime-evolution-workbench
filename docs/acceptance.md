@@ -32,6 +32,8 @@ Passing a build is not product acceptance. Version 0.1 may be labeled stable onl
 - Verify restart/startup behavior with and without `-EnableStartup`.
 - Uninstall and confirm the plugin, marketplace entry, Startup shortcut, and service process are absent.
 - Confirm Run data is preserved by default and removed only with an explicit, path-safe `-DeleteData` run.
+- Occupy the configured port before a first install and a later `-Repair`; confirm the first leaves no new product state and the second restores the prior plugin, marketplace, Startup shortcut, and data.
+- Require the machine-readable installation-state audit to pass after normal removal and again with no data after explicit deletion.
 - Confirm neither Workflow Environment Factory nor RunCase Interchange must be running for the product to work.
 
 The repeatable clean-user lifecycle portion is encoded in `scripts\Acceptance-InstallUninstall.ps1` and runs on a fresh GitHub-hosted Windows VM. The authenticated code-freeze gate executes the real failure-to-safe-evolution service closure with six real Codex Runs. Human review of the three UI surfaces and clean-machine installation remain separate acceptance evidence; neither result substitutes for the other.

@@ -28,7 +28,7 @@ if ($null -ne $existingHealth) {
   return
 }
 
-New-Item -ItemType Directory -Path $resolvedDataDir -Force | Out-Null
+Initialize-RewDataRoot $resolvedDataDir
 $logsDir = Join-Path $resolvedDataDir "logs"
 New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
 $pidPath = Join-Path $resolvedDataDir "service.pid"

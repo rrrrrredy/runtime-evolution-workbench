@@ -4,7 +4,9 @@ All notable changes are recorded here. The project follows semantic versioning a
 
 ## [Unreleased]
 
-- Isolated Windows install/start/preserve/reinstall/delete/uninstall lifecycle now passes locally; fresh hosted-Windows and full golden-closure evidence remain pending.
+- Installation is now transactional across the product-created data root, plugin, marketplace, Startup shortcut, service startup, and failed `-Repair`; the clean-Windows gate injects real port conflicts and requires restoration plus a machine-readable zero-residue audit.
+- Every entry point now creates only a previously nonexistent data directory or reuses one with a valid product ownership marker; it rejects existing unmarked directories, wrong-product markers, reparse points, and protected roots.
+- The isolated Windows install/start/preserve/reinstall/delete/uninstall lifecycle gate is implemented; fresh hosted-Windows and full golden-closure evidence remain pending.
 - Public release packaging and compatibility matrix pending.
 - Read-only RunCase Interchange library for validated, redacted, idempotent Run/Case/Score imports.
 - Windows comparison cleanup now waits for child-process pipes to close and normalizes 8.3 repository paths.

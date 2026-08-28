@@ -7,6 +7,7 @@ import { CodexAppServerAdapter } from "../dist/server/app-server/adapter.js";
 import { ComparisonService } from "../dist/server/comparison-service.js";
 import { ContentStore } from "../dist/server/content-store.js";
 import { EvolutionService } from "../dist/server/evolution-service.js";
+import { ensureWorkbenchDataRoot } from "../dist/server/config.js";
 import { HookIngestor } from "../dist/server/hook-ingestor.js";
 import { AgentRunExporter } from "../dist/server/protocol-export.js";
 import { WorkbenchStore } from "../dist/server/store.js";
@@ -24,6 +25,7 @@ const VERIFY_RESULT_SCRIPT = "const fs=require('node:fs');let value='';try{value
 const stamp = new Date().toISOString().replace(/[:.]/g, "-");
 const defaultGateRoot = resolve(process.cwd(), "..", "_tmp");
 const dataDir = resolve(process.env.REW_GATE_DATA_DIR ?? join(defaultGateRoot, `rew-product-gate-${stamp}`));
+ensureWorkbenchDataRoot(dataDir);
 const codexExecutable = process.env.CODEX_EXECUTABLE ?? "codex";
 const gateOutput = process.env.REW_GATE_OUTPUT;
 const config = {

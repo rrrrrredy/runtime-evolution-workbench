@@ -20,7 +20,6 @@
     "build:server": "tsc -p tsconfig.server.json",
     "build:web": "tsc -p tsconfig.web.json --noEmit && vite build",
     "check": "pwsh -NoProfile -File scripts/Check.ps1",
-    "dev": "tsx src/dev.ts",
     "dev:server": "tsx watch src/server/index.ts",
     "dev:web": "vite",
     "start": "node dist/server/index.js",

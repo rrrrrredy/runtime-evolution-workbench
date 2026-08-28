@@ -1,4 +1,4 @@
-import { mkdirSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -14,6 +14,49 @@ export interface WorkbenchConfig {
   tokenPath: string;
   codexExecutable: string;
   webRoot: string;
+}
+
+const dataMarkerName = ".runtime-evolution-workbench-data.json";
+
+export function ensureWorkbenchDataRoot(requestedDataDir: string): void {
+  const dataDir = resolve(requestedDataDir);
+  if (existsSync(dataDir)) {
+    const dataRoot = lstatSync(dataDir);
+    if (!dataRoot.isDirectory() || dataRoot.isSymbolicLink()) {
+      throw new Error(`Runtime Evolution Workbench data root must be a real directory: ${dataDir}`);
+    }
+    const markerPath = join(dataDir, dataMarkerName);
+    if (existsSync(markerPath)) {
+      if (lstatSync(markerPath).isSymbolicLink()) throw new Error(`Data-root marker cannot be a symbolic link: ${markerPath}`);
+      let marker: unknown;
+      try {
+        marker = JSON.parse(readFileSync(markerPath, "utf8"));
+      } catch {
+        throw new Error(`Runtime Evolution Workbench data marker is invalid: ${markerPath}`);
+      }
+      if (
+        marker === null ||
+        typeof marker !== "object" ||
+        (marker as Record<string, unknown>).schema_version !== "product.data-root.v1" ||
+        (marker as Record<string, unknown>).product !== "runtime-evolution-workbench"
+      ) {
+        throw new Error(`Runtime Evolution Workbench data marker names another product: ${markerPath}`);
+      }
+      return;
+    }
+    throw new Error(`Data directory already exists but has no Runtime Evolution Workbench ownership marker: ${dataDir}`);
+  } else {
+    mkdirSync(dataDir, { recursive: true });
+  }
+  writeFileSync(
+    join(dataDir, dataMarkerName),
+    `${JSON.stringify({
+      schema_version: "product.data-root.v1",
+      product: "runtime-evolution-workbench",
+      created_at: new Date().toISOString()
+    }, null, 2)}\n`,
+    { encoding: "utf8", flag: "wx" }
+  );
 }
 
 function defaultDataDir(): string {
@@ -40,6 +83,7 @@ export function loadConfig(): WorkbenchConfig {
   }
 
   const dataDir = resolve(process.env.REW_DATA_DIR ?? defaultDataDir());
+  ensureWorkbenchDataRoot(dataDir);
   const config: WorkbenchConfig = {
     host: "127.0.0.1",
     port: parsePort(process.env.REW_PORT),

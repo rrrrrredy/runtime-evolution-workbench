@@ -13,7 +13,7 @@ A green build is not a Runtime Evolution Workbench release.
 
 ## Pull-request gate
 
-Windows CI runs the strict server/web build, 13 focused regression tests, plugin validation, and one synthetic UI golden scenario. The UI gate must retain three Runs, show an observation gap, import one standard Factory Case, fit the mobile viewport, and report no browser/page errors.
+Windows CI runs the strict server/web build, 16 focused regression tests, plugin validation, installation data-root safety checks, and one synthetic UI golden scenario. The UI gate must retain three Runs, show an observation gap, import one standard Factory Case, fit the mobile viewport, and report no browser/page errors.
 
 ## Code-freeze gate
 

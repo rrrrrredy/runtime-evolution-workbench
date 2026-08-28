@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -18,6 +18,34 @@ const replacements = [
 const patterns = new Set();
 let redactedFieldCount = 0;
 let truncatedFieldCount = 0;
+
+function ensureDataRoot(dataRoot) {
+  const markerPath = join(dataRoot, ".runtime-evolution-workbench-data.json");
+  if (existsSync(dataRoot)) {
+    const root = lstatSync(dataRoot);
+    if (!root.isDirectory() || root.isSymbolicLink()) throw new Error("Data root is not a real directory");
+    if (existsSync(markerPath)) {
+      if (lstatSync(markerPath).isSymbolicLink()) throw new Error("Data marker is a symbolic link");
+      const marker = JSON.parse(readFileSync(markerPath, "utf8"));
+      if (marker?.schema_version !== "product.data-root.v1" || marker?.product !== "runtime-evolution-workbench") {
+        throw new Error("Data marker names another product");
+      }
+      return;
+    }
+    throw new Error("Data directory already exists but has no Runtime Evolution Workbench marker");
+  } else {
+    mkdirSync(dataRoot, { recursive: true });
+  }
+  writeFileSync(
+    markerPath,
+    `${JSON.stringify({
+      schema_version: "product.data-root.v1",
+      product: "runtime-evolution-workbench",
+      created_at: new Date().toISOString()
+    }, null, 2)}\n`,
+    { encoding: "utf8", flag: "wx" }
+  );
+}
 
 function redact(value, key) {
   if (key && secretKeyPattern.test(key)) {
@@ -82,6 +110,7 @@ try {
   };
   const fallbackRoot = process.env.LOCALAPPDATA ? join(process.env.LOCALAPPDATA, "RuntimeEvolutionWorkbench") : join(homedir(), ".runtime-evolution-workbench");
   const dataRoot = process.env.REW_DATA_DIR ?? fallbackRoot;
+  ensureDataRoot(dataRoot);
   const pendingDir = join(dataRoot, "spool", "pending");
   mkdirSync(pendingDir, { recursive: true });
   const prefix = String(Date.now()).padStart(16, "0");

@@ -57,8 +57,10 @@ try {
     $listing = (& $tar.Source -tf $archivePath | Out-String)
     foreach ($required in @(
       "$folderName/LICENSE",
+      "$folderName/NOTICE",
       "$folderName/release-source.json",
       "$folderName/scripts/Install.ps1",
+      "$folderName/scripts/Inspect-Installation.ps1",
       "$folderName/scripts/Acceptance-InstallUninstall.ps1",
       "$folderName/plugins/runtime-evolution-workbench/.codex-plugin/plugin.json",
       "$folderName/dist/server/index.js",

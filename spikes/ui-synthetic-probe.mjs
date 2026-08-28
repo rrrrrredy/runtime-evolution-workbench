@@ -7,9 +7,12 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
 import { WorkbenchStore } from "../dist/server/store.js";
+import { ensureWorkbenchDataRoot } from "../dist/server/config.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const dataDir = mkdtempSync(join(tmpdir(), "rew-synthetic-ui-"));
+const scratchDir = mkdtempSync(join(tmpdir(), "rew-synthetic-ui-"));
+const dataDir = join(scratchDir, "data");
+ensureWorkbenchDataRoot(dataDir);
 const outputDir = resolve(process.env.REW_UI_OUTPUT_DIR ?? join(root, "docs", "images"));
 const port = Number.parseInt(process.env.REW_SYNTHETIC_PORT ?? "43139", 10);
 const require = createRequire(import.meta.url);
@@ -191,5 +194,5 @@ try {
     server.kill();
     await serverClosed;
   }
-  rmSync(dataDir, { recursive: true, force: true });
+  rmSync(scratchDir, { recursive: true, force: true });
 }

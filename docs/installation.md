@@ -38,8 +38,8 @@ Restart Codex so the new Hooks, MCP tools, and Skill are loaded.
 - `-EnableStartup` adds one current-user shortcut named `Runtime Evolution Workbench.lnk` to the Windows Startup folder.
 - `-Open` opens the authenticated local session URL after the service is healthy.
 - `-NoStart` installs the plugin but does not launch the service.
-- `-Repair` removes and re-adds only this product's existing plugin and marketplace registration before installing.
-- `-Port` and `-DataDir` are forwarded to the first service start and the optional Startup shortcut. When either is customized, launch Codex with matching `REW_PORT` and `REW_DATA_DIR` values so Hooks and MCP tools use the same local instance.
+- `-Repair` removes and re-adds only this product's existing plugin and marketplace registration before installing. If a later step fails, the previous registration and Startup shortcut are restored.
+- `-Port` and `-DataDir` are forwarded to the first service start and the optional Startup shortcut. A custom data path must either not exist yet or already carry this product's ownership marker; existing unmarked directories are rejected even when empty. When either value is customized, launch Codex with matching `REW_PORT` and `REW_DATA_DIR` values so Hooks and MCP tools use the same local instance.
 
 Set `REW_NODE` to an exact Node 22 executable when more than one Node version is installed. Set `REW_DATA_DIR` or pass `-DataDir` to the start/stop scripts to relocate local data. The Hooks and MCP process must receive the same `REW_DATA_DIR` and `REW_PORT` values as the service.
 
@@ -88,6 +88,15 @@ Permanent data removal is separate and explicit:
 .\scripts\Uninstall.ps1 -DeleteData
 ```
 
-The script resolves the target and refuses a drive root, user profile, Local AppData root, or suspiciously broad path. `-DeleteData` is not recoverable by the product. Export important Runs first.
+Verify the final machine state without changing it:
 
-Release CI also executes `scripts\Acceptance-InstallUninstall.ps1` in an isolated Codex home. It proves real plugin/marketplace registration, a loopback service, Startup creation/removal, data preservation, reinstall, explicit deletion, and zero product registration after removal. This lifecycle gate does not replace the authenticated Codex Run evidence described in the release process.
+```powershell
+.\scripts\Inspect-Installation.ps1 -RequireAbsent
+.\scripts\Inspect-Installation.ps1 -RequireAbsent -RequireNoData
+```
+
+The first command permits the data preserved by the default uninstall. The second is the strict zero-data check after an explicit `-DeleteData` uninstall. Both fail when Codex plugin/marketplace state cannot be inspected instead of claiming success from missing evidence.
+
+The script deletes only a real directory carrying a valid Runtime Evolution Workbench ownership marker. It also rejects files, reparse points, a drive root, user profile, Documents, Local AppData root, or another suspiciously broad path. `-DeleteData` is not recoverable by the product. Export important Runs first.
+
+Release CI also executes `scripts\Acceptance-InstallUninstall.ps1` in an isolated Codex home. It occupies the service port to prove a failed first install removes every newly created product state, then repeats the fault during `-Repair` and requires the prior plugin, marketplace, Startup shortcut, and data to survive byte-for-byte where applicable. It then proves real registration, a loopback service, data preservation, reinstall, ownership-marked explicit deletion, and machine-audited zero product registration after removal. This lifecycle gate does not replace the authenticated Codex Run evidence described in the release process.
