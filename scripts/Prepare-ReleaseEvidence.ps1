@@ -25,7 +25,15 @@ try {
   $evidencePath = Join-Path $outputRoot "runtime-product-gate-$Version.json"
   if (Test-Path -LiteralPath $evidencePath -PathType Leaf) { Remove-Item -LiteralPath $evidencePath -Force }
 
-  $gateData = Join-Path ([System.IO.Path]::GetTempPath()) "rew-release-gate-$([Guid]::NewGuid().ToString('N'))"
+  $configuredGateRoot = [Environment]::GetEnvironmentVariable("REW_RELEASE_GATE_ROOT", "Process")
+  $gateRoot = if ([string]::IsNullOrWhiteSpace($configuredGateRoot)) {
+    Join-Path (Split-Path $script:RewRoot -Parent) "_tmp"
+  } else {
+    [System.IO.Path]::GetFullPath($configuredGateRoot)
+  }
+  New-Item -ItemType Directory -Path $gateRoot -Force | Out-Null
+  $resolvedGateRoot = (Resolve-Path -LiteralPath $gateRoot).Path
+  $gateData = Join-Path $resolvedGateRoot "rew-release-gate-$([Guid]::NewGuid().ToString('N'))"
   New-Item -ItemType Directory -Path $gateData | Out-Null
   $previousData = [Environment]::GetEnvironmentVariable("REW_GATE_DATA_DIR", "Process")
   $previousOutput = [Environment]::GetEnvironmentVariable("REW_GATE_OUTPUT", "Process")
@@ -40,7 +48,7 @@ try {
     [Environment]::SetEnvironmentVariable("REW_GATE_OUTPUT", $previousOutput, "Process")
     if (Test-Path -LiteralPath $gateData -PathType Container) {
       $resolvedGateData = (Resolve-Path -LiteralPath $gateData).Path
-      $expectedPrefix = Join-Path ([System.IO.Path]::GetTempPath()) "rew-release-gate-"
+      $expectedPrefix = Join-Path $resolvedGateRoot "rew-release-gate-"
       if (-not $resolvedGateData.StartsWith($expectedPrefix, [StringComparison]::OrdinalIgnoreCase)) {
         throw "Unsafe release-gate cleanup target: $resolvedGateData"
       }

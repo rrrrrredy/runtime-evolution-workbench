@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
 import { CodexAppServerAdapter } from "../dist/server/app-server/adapter.js";
@@ -23,7 +22,8 @@ const CANDIDATE_CAPABILITY = [
 const VERIFY_RESULT_SCRIPT = "const fs=require('node:fs');let value='';try{value=fs.readFileSync('result.txt','utf8').trim()}catch{}process.exit(value===process.argv[1]?0:1);";
 
 const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-const dataDir = resolve(process.env.REW_GATE_DATA_DIR ?? join(tmpdir(), `rew-product-gate-${stamp}`));
+const defaultGateRoot = resolve(process.cwd(), "..", "_tmp");
+const dataDir = resolve(process.env.REW_GATE_DATA_DIR ?? join(defaultGateRoot, `rew-product-gate-${stamp}`));
 const codexExecutable = process.env.CODEX_EXECUTABLE ?? "codex";
 const gateOutput = process.env.REW_GATE_OUTPUT;
 const config = {
@@ -184,6 +184,16 @@ try {
     "Create result.txt at the repository root containing exactly protect followed by a newline. Do not edit any other file.",
     "protect"
   );
+  if (
+    failureSeed.runStatus !== "completed"
+      || failureSeed.verifierStatus !== "fail"
+      || protectionSeed.runStatus !== "completed"
+      || protectionSeed.verifierStatus !== "pass"
+  ) {
+    throw new Error(
+      `Seed evidence failed before comparison: failure=${failureSeed.runStatus}/${failureSeed.verifierStatus}, protection=${protectionSeed.runStatus}/${protectionSeed.verifierStatus}`
+    );
+  }
   const correction = store.addCorrection({
     runId: failureSeed.runId,
     kind: "instruction",
@@ -238,6 +248,20 @@ try {
   const cell = (kind, variant) => comparisonDetail.runs.find(
     (entry) => caseById.get(entry.caseId)?.kind === kind && entry.variant === variant
   )?.verifierStatus ?? "missing";
+  const matrix = {
+    failureBaseline: cell("failure", "baseline"),
+    failureCandidate: cell("failure", "candidate"),
+    protectionBaseline: cell("protection", "baseline"),
+    protectionCandidate: cell("protection", "candidate")
+  };
+  if (
+    comparisonDetail.comparison.status !== "completed"
+      || comparisonDetail.comparison.conclusion !== "candidate_supported"
+  ) {
+    throw new Error(
+      `Four-cell comparison did not support approval: status=${comparisonDetail.comparison.status}, conclusion=${comparisonDetail.comparison.conclusion}, matrix=${JSON.stringify(matrix)}`
+    );
+  }
 
   const approved = evolution.approve(proposal.id);
   const publishEvent = evolution.publish(proposal.id);
@@ -307,10 +331,7 @@ try {
       comparisonStatus: comparisonDetail.comparison.status,
       comparisonConclusion: comparisonDetail.comparison.conclusion,
       comparisonCells: comparisonDetail.runs.length,
-      failureBaseline: cell("failure", "baseline"),
-      failureCandidate: cell("failure", "candidate"),
-      protectionBaseline: cell("protection", "baseline"),
-      protectionCandidate: cell("protection", "candidate"),
+      ...matrix,
       singleRunEvidence: comparisonDetail.comparison.singleRunEvidence,
       allCellsHaveRunIds: comparisonDetail.runs.every((entry) => entry.runId !== null),
       noInfrastructureErrors: comparisonDetail.runs.every((entry) => entry.infrastructureError.length === 0),
