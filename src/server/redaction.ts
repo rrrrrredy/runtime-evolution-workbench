@@ -1,4 +1,5 @@
 const secretKeyPattern = /(?:authorization|cookie|password|passwd|secret|token|api[_-]?key|private[_-]?key)/i;
+const structuralSecretKeys = new Set(["secret_patterns_applied", "secret_refs"]);
 const bearerPattern = /\bBearer\s+[A-Za-z0-9._~+/=-]{8,}/gi;
 const openAiKeyPattern = /\bsk-[A-Za-z0-9_-]{12,}/g;
 const githubTokenPattern = /\bgh[opusr]_[A-Za-z0-9]{20,}/g;
@@ -53,7 +54,7 @@ export function redactUnknown<T>(input: T, options: RedactionOptions = {}): Reda
   const seen = new WeakSet<object>();
 
   const visit = (value: unknown, key?: string): unknown => {
-    if (key !== undefined && secretKeyPattern.test(key)) {
+    if (key !== undefined && !structuralSecretKeys.has(key.toLowerCase()) && secretKeyPattern.test(key)) {
       redactedFieldCount += 1;
       patterns.add("secret-field-name");
       return "[REDACTED:secret-field]";

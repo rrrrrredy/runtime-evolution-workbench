@@ -6,9 +6,10 @@ describe("redactUnknown", () => {
   it("removes named secrets and inline credentials before persistence", () => {
     const fakeApiKey = ["sk", "abcdefghijklmnop"].join("-");
     const fakeGitHubToken = `ghp_${"1234567890".repeat(3)}`;
+    const fakeBearer = ["Bearer", "should-never-survive"].join(" ");
     const result = redactUnknown({
-      authorization: "Bearer should-never-survive",
-      output: `request used ${fakeApiKey} and ${fakeGitHubToken}`,
+      authorization: fakeBearer,
+      output: `request used ${fakeBearer}, ${fakeApiKey}, and ${fakeGitHubToken}`,
       safe: "visible"
     });
     const serialized = JSON.stringify(result.value);

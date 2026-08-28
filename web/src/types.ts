@@ -1,5 +1,13 @@
 export type ViewName = "runs" | "issues" | "evolution";
 
+export interface ProtocolDocument {
+  id: string;
+  schemaVersion: "agent.run.v1" | "workflow.case.v1" | "workflow.score.v1";
+  externalId: string;
+  digest: string;
+  importedAt: string;
+}
+
 export interface RunSummary {
   id: string;
   sessionId: string;

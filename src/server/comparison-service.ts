@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { join, resolve, sep } from "node:path";
 
 import type {
@@ -20,6 +20,10 @@ interface ProcessResult {
   stderr: string;
   timedOut: boolean;
   durationMs: number;
+}
+
+function canonicalPath(value: string): string {
+  return resolve(realpathSync.native(value)).toLowerCase();
 }
 
 export interface ComparisonCaseInput {
@@ -49,14 +53,22 @@ function runProcess(command: string, args: string[], cwd: string, timeoutMs: num
     };
     child.stdout.on("data", (chunk: Buffer) => { stdout = append(stdout, chunk); });
     child.stderr.on("data", (chunk: Buffer) => { stderr = append(stderr, chunk); });
-    child.once("error", reject);
+    let settled = false;
     let timedOut = false;
     const timeout = setTimeout(() => {
       timedOut = true;
       child.kill();
     }, timeoutMs);
-    child.once("exit", (code) => {
+    child.once("error", (error) => {
       clearTimeout(timeout);
+      if (settled) return;
+      settled = true;
+      reject(error);
+    });
+    child.once("close", (code) => {
+      clearTimeout(timeout);
+      if (settled) return;
+      settled = true;
       resolvePromise({ exitCode: code, stdout, stderr, timedOut, durationMs: Date.now() - startedAt });
     });
   });
@@ -86,7 +98,7 @@ export class ComparisonService {
     const repository = await runProcess("git", ["-C", proposal.workspaceRoot, "rev-parse", "--show-toplevel"], proposal.workspaceRoot, 15_000);
     if (repository.exitCode !== 0) throw new Error(`workspaceRoot is not a Git repository: ${repository.stderr.trim()}`);
     const repositoryRoot = repository.stdout.trim();
-    if (resolve(repositoryRoot).toLowerCase() !== resolve(proposal.workspaceRoot).toLowerCase()) {
+    if (canonicalPath(repositoryRoot) !== canonicalPath(proposal.workspaceRoot)) {
       throw new Error("MVP comparisons require workspaceRoot to be the Git repository root");
     }
     const commit = await runProcess("git", ["-C", proposal.workspaceRoot, "rev-parse", "HEAD"], proposal.workspaceRoot, 15_000);

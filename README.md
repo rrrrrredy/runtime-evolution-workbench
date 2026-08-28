@@ -18,7 +18,7 @@ It is not another trace dashboard. The product is useful when a Run is over:
 
 The local workbench has three product surfaces:
 
-- **Runs** keeps observed and product-managed executions, structured events, artifacts, outcomes, user corrections, and visible evidence gaps.
+- **Runs** keeps observed and product-managed executions, structured events, artifacts, outcomes, user corrections, visible evidence gaps, and a read-only library for portable Run/Case/Score files.
 - **Issues** turns selected evidence into a cause hypothesis. Instruction, Skill, tool, environment, permission, validation, model, and unknown remain separate categories.
 - **Evolution Lab** shows the exact one-file diff, the original failure case, one protection case, four baseline/candidate results, and publish/rollback history.
 
@@ -69,11 +69,12 @@ See [installation and removal](docs/installation.md) for the exact state changes
 1. Use Codex normally. Hooks write redacted, atomic event envelopes to a local spool even when the workbench service is closed.
 2. Open the local workbench with `.\scripts\Start.ps1 -Open` and label the result or save a correction.
 3. Backfill a stored Codex Thread if needed. Treat the declared mapping gaps as part of the evidence.
-4. Create an Issue only when a Run or correction supports it. Keep counterevidence attached.
-5. Create a proposal for exactly one `AGENTS.md` or one `SKILL.md`, using a failure Run and a distinct protection Run.
-6. Supply objective verifier commands. The workbench creates detached Git worktrees and runs exactly four cells.
-7. Review the exact diff and results. Approve and publish manually, or reject it.
-8. Roll back from the workbench only while the target still matches the published candidate. Otherwise it opens a conflict instead of overwriting later user work.
+4. Optionally open **Protocol library** on the Runs page and import a `workflow.case.v1` or `workflow.score.v1` file from Workflow Environment Factory. Imports are validated, redacted again, and kept read-only in this product's own database.
+5. Create an Issue only when a Run or correction supports it. Keep counterevidence attached.
+6. Create a proposal for exactly one `AGENTS.md` or one `SKILL.md`, using a failure Run and a distinct protection Run.
+7. Supply objective verifier commands. The workbench creates detached Git worktrees and runs exactly four cells.
+8. Review the exact diff and results. Approve and publish manually, or reject it.
+9. Roll back from the workbench only while the target still matches the published candidate. Otherwise it opens a conflict instead of overwriting later user work.
 
 Verifier commands execute locally in isolated worktrees with the current user's permissions. Review repository code and verifier arguments before running a comparison.
 
@@ -83,6 +84,7 @@ Verifier commands execute locally in isolated worktrees with the current user's 
 - A random local session token protects every API route; browser sessions use an HttpOnly, SameSite=Strict cookie.
 - Hook input is redacted before spooling and again before durable storage. Secret-like fields, bearer tokens, API keys, GitHub tokens, private keys, and oversized content are handled explicitly.
 - Structured events are retained; diagnostic content stays on the machine in a SHA-256 content store.
+- Portable protocol imports are schema-validated before and after local redaction. Importing a Case or Score never grants it execution authority.
 - The MCP server can collect evidence and create proposals. It intentionally has no approve or publish tool.
 - Publishing verifies the original file hash. Rollback verifies the candidate hash and creates a conflict record when later edits exist.
 
@@ -111,6 +113,7 @@ The uninstaller verifies the resolved path and refuses broad locations before re
 - `@agent-run-protocol/core` as the only cross-product dependency.
 
 Runtime Evolution Workbench does not share its service, database, queue, UI, executor, or business code with Workflow Environment Factory. See [architecture](docs/architecture.md).
+The exact portable-file boundary is documented in [protocol interoperability](docs/protocol.md).
 
 ## Deliberate non-goals for 0.1
 

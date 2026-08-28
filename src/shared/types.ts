@@ -2,6 +2,7 @@ export type RunMode = "observed" | "managed" | "imported";
 export type RunStatus = "running" | "completed" | "failed" | "cancelled" | "agent_timeout" | "agent_crash" | "infrastructure_error";
 export type OutcomeStatus = "success" | "partial" | "failure" | "unknown";
 export type Completeness = "complete" | "partial" | "unknown";
+export type ProtocolSchemaVersion = "agent.run.v1" | "workflow.case.v1" | "workflow.score.v1";
 
 export interface HookEnvelope {
   schema_version: "rew.hook.v1";
@@ -172,4 +173,13 @@ export interface ComparisonRunRecord {
   durationMs: number | null;
   infrastructureError: string;
   createdAt: string;
+}
+
+export interface ProtocolDocumentRecord {
+  id: string;
+  schemaVersion: ProtocolSchemaVersion;
+  externalId: string;
+  digest: string;
+  document: Record<string, unknown>;
+  importedAt: string;
 }

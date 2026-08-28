@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   ArrowDownToLine,
+  BookOpenCheck,
   Check,
   ChevronRight,
   CircleDot,
@@ -11,11 +12,12 @@ import {
   RefreshCw,
   Search,
   TerminalSquare,
+  Upload,
   X
 } from "lucide-react";
 
 import { api, post } from "../api";
-import type { CodexThread, RunBundle, RunEvent, RunSummary } from "../types";
+import type { CodexThread, ProtocolDocument, RunBundle, RunEvent, RunSummary } from "../types";
 import { duration, EmptyState, formatTime, SectionHeading, shortId, StatusBadge } from "./ui";
 
 function eventIcon(event: RunEvent) {
@@ -35,6 +37,7 @@ export function RunsView({ runs, onDataChanged }: { runs: RunSummary[]; onDataCh
   const [correction, setCorrection] = useState("");
   const [outcomeSummary, setOutcomeSummary] = useState("");
   const [threadPicker, setThreadPicker] = useState(false);
+  const [protocolLibrary, setProtocolLibrary] = useState(false);
   const [threads, setThreads] = useState<CodexThread[]>([]);
 
   useEffect(() => {
@@ -122,11 +125,12 @@ export function RunsView({ runs, onDataChanged }: { runs: RunSummary[]; onDataCh
   if (runs.length === 0) {
     return (
       <div className="page-frame">
-        <SectionHeading eyebrow="Local evidence" title="Runs" action={<button className="primary-button" onClick={() => void openThreadPicker()}><ArrowDownToLine size={16} /> Backfill</button>} />
-        <EmptyState title="No Runs retained yet" action={<button className="primary-button" onClick={() => void openThreadPicker()}>Backfill a stored Codex Thread</button>}>
+        <SectionHeading eyebrow="Local evidence" title="Runs" action={<div className="button-row"><button onClick={() => setProtocolLibrary(true)}><BookOpenCheck size={16} /> Protocol library</button><button className="primary-button" onClick={() => void openThreadPicker()}><ArrowDownToLine size={16} /> Backfill</button></div>} />
+        <EmptyState title="No Runs retained yet" action={<div className="button-row"><button onClick={() => setProtocolLibrary(true)}>Import Case or Score</button><button className="primary-button" onClick={() => void openThreadPicker()}>Backfill a stored Codex Thread</button></div>}>
           Install the plugin for ordinary lifecycle capture, or import a stored Thread through App Server. A missing Run is never presented as a complete Trace.
         </EmptyState>
         {threadPicker ? <ThreadPicker threads={threads} busy={busy} onClose={() => setThreadPicker(false)} onBackfill={backfill} /> : null}
+        {protocolLibrary ? <ProtocolLibrary onClose={() => setProtocolLibrary(false)} /> : null}
       </div>
     );
   }
@@ -136,7 +140,10 @@ export function RunsView({ runs, onDataChanged }: { runs: RunSummary[]; onDataCh
       <section className="run-index">
         <div className="index-header">
           <SectionHeading eyebrow="Local evidence" title="Runs" />
-          <button className="icon-button bordered" onClick={() => void openThreadPicker()} aria-label="Backfill stored Codex Thread"><ArrowDownToLine size={17} /></button>
+          <div className="button-row compact">
+            <button className="icon-button bordered" onClick={() => setProtocolLibrary(true)} aria-label="Open protocol library"><BookOpenCheck size={17} /></button>
+            <button className="icon-button bordered" onClick={() => void openThreadPicker()} aria-label="Backfill stored Codex Thread"><ArrowDownToLine size={17} /></button>
+          </div>
         </div>
         <label className="search-field">
           <Search size={16} />
@@ -237,6 +244,7 @@ export function RunsView({ runs, onDataChanged }: { runs: RunSummary[]; onDataCh
         )}
       </section>
       {threadPicker ? <ThreadPicker threads={threads} busy={busy} onClose={() => setThreadPicker(false)} onBackfill={backfill} /> : null}
+      {protocolLibrary ? <ProtocolLibrary onClose={() => setProtocolLibrary(false)} /> : null}
     </div>
   );
 }
@@ -261,6 +269,78 @@ function ThreadPicker({ threads, busy, onClose, onBackfill }: { threads: CodexTh
               <div><strong>{thread.preview || "Untitled Codex Thread"}</strong><small>{thread.cwd ?? "Working directory unavailable"}</small></div>
               <code>{shortId(thread.id)}</code>
             </button>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ProtocolLibrary({ onClose }: { onClose: () => void }) {
+  const [documents, setDocuments] = useState<ProtocolDocument[]>([]);
+  const [busy, setBusy] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  async function load() {
+    const result = await api<{ documents: ProtocolDocument[] }>("/api/protocol/imports");
+    setDocuments(result.documents);
+  }
+
+  useEffect(() => {
+    let active = true;
+    setBusy(true);
+    void api<{ documents: ProtocolDocument[] }>("/api/protocol/imports")
+      .then((result) => { if (active) setDocuments(result.documents); })
+      .catch((caught) => { if (active) setError(caught instanceof Error ? caught.message : String(caught)); })
+      .finally(() => { if (active) setBusy(false); });
+    return () => { active = false; };
+  }, []);
+
+  async function importFile(file: File | undefined) {
+    if (file === undefined) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const document = JSON.parse(await file.text()) as unknown;
+      await post<ProtocolDocument>("/api/protocol/imports", { document });
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <section className="modal protocol-modal" role="dialog" aria-modal="true" aria-label="Agent Run Protocol library">
+        <header>
+          <div><div className="eyebrow">Portable evidence</div><h2>Protocol library</h2></div>
+          <button className="icon-button" onClick={onClose} aria-label="Close protocol library"><X size={18} /></button>
+        </header>
+        <p className="muted">Import a versioned Run, Case, or Score JSON file. It is validated, redacted again, and kept in this product's own local database.</p>
+        <div className="protocol-toolbar">
+          <label className="primary-button protocol-upload">
+            <Upload size={15} /> {busy ? "Checking…" : "Import JSON"}
+            <input type="file" accept="application/json,.json" disabled={busy} onChange={(event) => {
+              const file = event.currentTarget.files?.[0];
+              event.currentTarget.value = "";
+              void importFile(file);
+            }} />
+          </label>
+          <span>{documents.length} document{documents.length === 1 ? "" : "s"}</span>
+        </div>
+        {error === null ? null : <div className="inline-error"><AlertTriangle size={16} /> {error}</div>}
+        <div className="protocol-list">
+          {documents.length === 0 && !busy ? <div className="protocol-empty">No portable documents imported yet.</div> : documents.map((document) => (
+            <article key={document.id}>
+              <div>
+                <StatusBadge value={document.schemaVersion.includes("score") ? "completed" : "imported"} label={document.schemaVersion} />
+                <strong>{document.externalId}</strong>
+              </div>
+              <code title={document.digest}>{document.digest.slice(0, 19)}…</code>
+              <time>{formatTime(document.importedAt)}</time>
+            </article>
           ))}
         </div>
       </section>

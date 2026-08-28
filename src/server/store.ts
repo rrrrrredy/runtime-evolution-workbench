@@ -17,6 +17,7 @@ import type {
   ObservationGap,
   OutcomeStatus,
   ProposalStatus,
+  ProtocolDocumentRecord,
   PublishEvent,
   RunMode,
   RunStatus,
@@ -228,6 +229,17 @@ function mapComparisonRun(row: Row): ComparisonRunRecord {
   };
 }
 
+function mapProtocolDocument(row: Row): ProtocolDocumentRecord {
+  return {
+    id: asString(row.id),
+    schemaVersion: asString(row.schema_version) as ProtocolDocumentRecord["schemaVersion"],
+    externalId: asString(row.external_id),
+    digest: asString(row.digest),
+    document: parseJson<Record<string, unknown>>(row.payload_json, {}),
+    importedAt: asString(row.imported_at)
+  };
+}
+
 export class WorkbenchStore {
   readonly #db: DatabaseSync;
 
@@ -395,6 +407,16 @@ export class WorkbenchStore {
         created_at TEXT NOT NULL,
         UNIQUE(comparison_id, case_id, variant)
       );
+
+      CREATE TABLE IF NOT EXISTS protocol_documents (
+        id TEXT PRIMARY KEY,
+        schema_version TEXT NOT NULL,
+        external_id TEXT NOT NULL,
+        digest TEXT NOT NULL UNIQUE,
+        payload_json TEXT NOT NULL,
+        imported_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS protocol_documents_imported_idx ON protocol_documents(imported_at DESC);
     `);
   }
 
@@ -860,6 +882,33 @@ export class WorkbenchStore {
       UPDATE comparison_runs SET infrastructure_error = ?
       WHERE comparison_id = ? AND case_id = ? AND variant = ?
     `).run(message, comparisonId, caseId, variant);
+  }
+
+  saveProtocolDocument(record: ProtocolDocumentRecord): ProtocolDocumentRecord {
+    const existing = this.#db.prepare("SELECT * FROM protocol_documents WHERE digest = ?").get(record.digest) as Row | undefined;
+    if (existing !== undefined) return mapProtocolDocument(existing);
+    this.#db.prepare(`
+      INSERT INTO protocol_documents (id, schema_version, external_id, digest, payload_json, imported_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(
+      record.id,
+      record.schemaVersion,
+      record.externalId,
+      record.digest,
+      JSON.stringify(record.document),
+      record.importedAt
+    );
+    return record;
+  }
+
+  listProtocolDocuments(): ProtocolDocumentRecord[] {
+    return (this.#db.prepare("SELECT * FROM protocol_documents ORDER BY imported_at DESC").all() as Row[])
+      .map(mapProtocolDocument);
+  }
+
+  getProtocolDocument(id: string): ProtocolDocumentRecord | null {
+    const row = this.#db.prepare("SELECT * FROM protocol_documents WHERE id = ?").get(id) as Row | undefined;
+    return row === undefined ? null : mapProtocolDocument(row);
   }
 
   #mapIssue(row: Row): IssueRecord {

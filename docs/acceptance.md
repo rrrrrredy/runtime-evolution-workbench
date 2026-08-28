@@ -14,6 +14,7 @@ Passing a build is not product acceptance. Version 0.1 may be labeled stable onl
 8. Roll back successfully while the candidate is unchanged.
 9. Publish again, edit the target outside the product, and confirm rollback produces a conflict without overwriting the edit.
 10. Export the Run as a valid `agent.run.v1` document and validate it with Agent Run Protocol.
+11. Import one Factory `workflow.case.v1` and its `workflow.score.v1`; confirm both remain read-only, survive restart, and do not require the Factory service.
 
 ## Necessary failures
 

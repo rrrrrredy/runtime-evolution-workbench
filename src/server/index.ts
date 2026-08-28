@@ -7,6 +7,7 @@ import { ContentStore } from "./content-store.js";
 import { EvolutionService } from "./evolution-service.js";
 import { HookIngestor } from "./hook-ingestor.js";
 import { AgentRunExporter } from "./protocol-export.js";
+import { ProtocolImportService } from "./protocol-import.js";
 import { WorkbenchStore } from "./store.js";
 
 const config = loadConfig();
@@ -16,11 +17,12 @@ const contentStore = new ContentStore(config.contentDir);
 const ingestor = new HookIngestor(config, store, contentStore);
 const adapter = new CodexAppServerAdapter(config.codexExecutable, store, contentStore);
 const exporter = new AgentRunExporter(store);
+const protocolImports = new ProtocolImportService(store);
 const evolution = new EvolutionService(store, contentStore);
 const comparisons = new ComparisonService(config, store, contentStore, adapter);
 const recovered = store.recoverInterruptedState();
 const cleanup = await comparisons.cleanupInterrupted(recovered.comparisonIds);
-const app = await createWorkbenchApp({ config, sessionToken, store, ingestor, adapter, exporter, evolution, comparisons });
+const app = await createWorkbenchApp({ config, sessionToken, store, ingestor, adapter, exporter, protocolImports, evolution, comparisons });
 
 ingestor.start();
 await app.listen({ host: config.host, port: config.port });

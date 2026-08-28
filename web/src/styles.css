@@ -222,6 +222,16 @@ blockquote small { display: block; margin-top: 5px; color: var(--muted); }
 .thread-list strong, .thread-list small { display: block; }
 .thread-list strong { margin-bottom: 4px; font-size: 11px; }
 .thread-list small, .thread-list code { color: var(--muted); font-size: 9px; }
+.protocol-modal > p { margin: 0; padding: 14px 18px; border-bottom: 1px solid var(--line); line-height: 1.55; }
+.protocol-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 18px; background: #f8f6f1; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 10px; }
+.protocol-upload { position: relative; width: max-content; cursor: pointer; }
+.protocol-upload input { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
+.protocol-list { max-height: 390px; overflow: auto; }
+.protocol-list article { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 14px; padding: 13px 18px; border-bottom: 1px solid var(--line); }
+.protocol-list article > div { display: grid; gap: 6px; min-width: 0; }
+.protocol-list article strong { overflow: hidden; font-family: monospace; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.protocol-list article code, .protocol-list article time { color: var(--muted); font-size: 9px; }
+.protocol-empty { padding: 38px 18px; color: var(--muted); font-size: 11px; text-align: center; }
 .drawer { position: absolute; top: 0; right: 0; width: min(480px, 100vw); height: 100%; overflow: auto; border-left: 1px solid var(--line-strong); background: var(--paper); box-shadow: var(--shadow); }
 .drawer.wide { width: min(660px, 100vw); }
 .drawer > label, .drawer > .form-pair, .drawer > .case-form, .drawer > .boundary-note, .drawer > .inline-error { margin: 14px 18px 0; }
@@ -290,6 +300,7 @@ blockquote small { display: block; margin-top: 5px; color: var(--muted); }
   .matrix-row { display: grid; grid-template-columns: repeat(2, 1fr); margin-bottom: 12px; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
   .matrix-label { grid-column: 1 / -1; }
   .form-pair { grid-template-columns: 1fr; }
+  .protocol-list article { grid-template-columns: 1fr; gap: 6px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

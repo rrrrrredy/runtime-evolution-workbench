@@ -12,6 +12,7 @@ import type { WorkbenchConfig } from "./config.js";
 import { EvolutionService } from "./evolution-service.js";
 import { HookIngestor } from "./hook-ingestor.js";
 import { AgentRunExporter } from "./protocol-export.js";
+import { ProtocolImportError, ProtocolImportService } from "./protocol-import.js";
 import { redactUnknown } from "./redaction.js";
 import { WorkbenchStore } from "./store.js";
 
@@ -22,6 +23,7 @@ export interface AppDependencies {
   ingestor: HookIngestor;
   adapter: CodexAppServerAdapter;
   exporter: AgentRunExporter;
+  protocolImports: ProtocolImportService;
   evolution: EvolutionService;
   comparisons: ComparisonService;
 }
@@ -82,6 +84,10 @@ const comparisonBody = z.object({
   })).length(2)
 });
 
+const protocolImportBody = z.object({
+  document: z.record(z.string(), z.unknown())
+});
+
 function bearerToken(header: string | undefined): string | undefined {
   if (header === undefined) return undefined;
   const match = /^Bearer\s+(.+)$/i.exec(header);
@@ -120,6 +126,28 @@ export async function createWorkbenchApp(deps: AppDependencies): Promise<Fastify
   }));
 
   app.post("/api/ingest", async () => ({ results: deps.ingestor.processPending() }));
+
+  app.get("/api/protocol/imports", async () => ({
+    documents: deps.store.listProtocolDocuments().map(({ document: _document, ...metadata }) => metadata)
+  }));
+
+  app.get<{ Params: { id: string } }>("/api/protocol/imports/:id", async (request, reply) => {
+    const document = deps.store.getProtocolDocument(request.params.id);
+    return document === null
+      ? reply.code(404).send({ error: "protocol_document_not_found" })
+      : document;
+  });
+
+  app.post("/api/protocol/imports", async (request, reply) => {
+    const parsed = protocolImportBody.safeParse(request.body);
+    if (!parsed.success) return reply.code(400).send({ error: z.prettifyError(parsed.error) });
+    try {
+      return reply.code(201).send(deps.protocolImports.importDocument(parsed.data.document));
+    } catch (error) {
+      if (error instanceof ProtocolImportError) return reply.code(422).send({ error: error.message });
+      throw error;
+    }
+  });
 
   app.get<{ Querystring: { limit?: string } }>("/api/runs", async (request) => {
     const parsed = Number.parseInt(request.query.limit ?? "100", 10);

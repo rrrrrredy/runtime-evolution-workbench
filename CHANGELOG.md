@@ -6,6 +6,8 @@ All notable changes are recorded here. The project follows semantic versioning a
 
 - Clean Windows installation and full golden-closure acceptance pending.
 - Public release packaging and compatibility matrix pending.
+- Read-only Agent Run Protocol library for validated, redacted, idempotent Run/Case/Score imports.
+- Windows comparison cleanup now waits for child-process pipes to close and normalizes 8.3 repository paths.
 
 ## [0.1.0] - 2026-08-28
 
