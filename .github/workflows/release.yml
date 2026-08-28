@@ -18,16 +18,16 @@ jobs:
         shell: pwsh
         working-directory: product
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           path: product
           fetch-depth: 0
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: rrrrrredy/runcase-interchange
           ref: v0.1.0
           path: protocol
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
           cache: npm
@@ -58,7 +58,7 @@ jobs:
           Copy-Item -LiteralPath ".\release-evidence\runtime-product-gate-$version.json" -Destination (Join-Path $env:GITHUB_WORKSPACE "artifacts") -Force
           Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE "runtime-installation-evidence.json") -Destination (Join-Path $env:GITHUB_WORKSPACE "artifacts") -Force
       - name: Attest release evidence
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@43d14bc2b83dec42d39ecae14e916627a18bb661 # v3
         with:
           subject-path: |
             artifacts/*.zip
