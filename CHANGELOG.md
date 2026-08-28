@@ -4,6 +4,7 @@ All notable changes are recorded here. The project follows semantic versioning a
 
 ## [Unreleased]
 
+- The exact RunCase Interchange SHA-512 lock now matches the reproducible `v0.1.0` asset built from the public prerelease candidate.
 - GitHub tag releases now require curated, version-matched adoption notes and are labeled prereleases so the public release surface matches the product's technical-preview status.
 - Installation is now transactional across the product-created data root, plugin, marketplace, Startup shortcut, service startup, and failed `-Repair`; the clean-Windows gate injects real port conflicts and requires restoration plus a machine-readable zero-residue audit.
 - Every entry point now creates only a previously nonexistent data directory or reuses one with a valid product ownership marker; it rejects existing unmarked directories, wrong-product markers, reparse points, and protected roots.
