@@ -30,6 +30,34 @@ function Remove-TestRoot([string]$Path, [string]$AllowedParent) {
   Remove-Item -LiteralPath $resolved -Recurse -Force
 }
 
+function Get-AcceptanceSourceEvidence {
+  $releaseSourcePath = Join-Path $script:RewRoot "release-source.json"
+  if (Test-Path -LiteralPath $releaseSourcePath -PathType Leaf) {
+    $releaseSource = Get-Content -LiteralPath $releaseSourcePath -Raw | ConvertFrom-Json
+    $expectedVersion = (Get-Content -LiteralPath (Join-Path $script:RewRoot "package.json") -Raw | ConvertFrom-Json).version
+    Assert-Acceptance ($releaseSource.schema_version -eq "product.release-source.v1") "release-source.json has an unsupported schema"
+    Assert-Acceptance ($releaseSource.product -eq "runtime-evolution-workbench") "release-source.json names another product"
+    Assert-Acceptance ($releaseSource.version -eq $expectedVersion) "release-source.json version does not match package.json"
+    Assert-Acceptance ([string]$releaseSource.commit -match '^[0-9a-f]{40}$') "release-source.json has an invalid commit"
+    return [pscustomobject]@{
+      kind = "release_archive"
+      commit = [string]$releaseSource.commit
+      dirty = $null
+    }
+  }
+
+  $git = Get-Command git -ErrorAction Stop
+  $commit = (& $git.Source -C $script:RewRoot rev-parse HEAD | Out-String).Trim()
+  Assert-Acceptance ($LASTEXITCODE -eq 0 -and $commit -match '^[0-9a-f]{40}$') "source checkout commit cannot be resolved"
+  $dirty = -not [string]::IsNullOrWhiteSpace((& $git.Source -C $script:RewRoot status --porcelain | Out-String).Trim())
+  Assert-Acceptance ($LASTEXITCODE -eq 0) "source checkout status cannot be resolved"
+  return [pscustomobject]@{
+    kind = "git_checkout"
+    commit = $commit
+    dirty = $dirty
+  }
+}
+
 $tempParent = if ([string]::IsNullOrWhiteSpace($env:RUNNER_TEMP)) {
   [System.IO.Path]::GetTempPath()
 } else {
@@ -95,13 +123,14 @@ try {
   Assert-Acceptance (-not (Test-RewPluginInstalled (Invoke-CodexText @("plugin", "list")) $selector)) "final uninstall left the plugin installed"
   Assert-Acceptance (-not (Test-RewMarketplacePresent (Invoke-CodexText @("plugin", "marketplace", "list")) $marketplace)) "final uninstall left the marketplace registered"
 
-  $worktreeDirty = -not [string]::IsNullOrWhiteSpace((& git -C $script:RewRoot status --porcelain | Out-String).Trim())
+  $sourceEvidence = Get-AcceptanceSourceEvidence
   $evidence = [ordered]@{
     schema_version = "product.installation-acceptance.v1"
     product = "runtime-evolution-workbench"
     product_version = (Get-Content -LiteralPath (Join-Path $script:RewRoot "package.json") -Raw | ConvertFrom-Json).version
-    tested_commit = (& git -C $script:RewRoot rev-parse HEAD).Trim()
-    worktree_dirty = $worktreeDirty
+    tested_commit = $sourceEvidence.commit
+    source_kind = $sourceEvidence.kind
+    worktree_dirty = $sourceEvidence.dirty
     started_at = $startedAt.ToString("o")
     completed_at = [DateTimeOffset]::UtcNow.ToString("o")
     os = (Get-CimInstance Win32_OperatingSystem).Caption

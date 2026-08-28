@@ -16,6 +16,8 @@ try {
 
   $package = Get-Content -LiteralPath (Join-Path $script:RewRoot "package.json") -Raw | ConvertFrom-Json
   if ($package.version -ne $Version) { throw "Requested version $Version does not match package.json version $($package.version)." }
+  $commit = (git rev-parse HEAD | Out-String).Trim()
+  if ($LASTEXITCODE -ne 0 -or $commit -notmatch '^[0-9a-f]{40}$') { throw "Could not resolve release commit." }
 
   $outputRoot = if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
     Join-Path $script:RewRoot "artifacts"
@@ -40,6 +42,13 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "git archive failed." }
     Expand-Archive -LiteralPath $sourceArchive -DestinationPath $expanded
     $stageRoot = Join-Path $expanded $folderName
+    $releaseSource = [ordered]@{
+      schema_version = "product.release-source.v1"
+      product = "runtime-evolution-workbench"
+      version = $Version
+      commit = $commit
+    } | ConvertTo-Json -Depth 3
+    [System.IO.File]::WriteAllText((Join-Path $stageRoot "release-source.json"), "$releaseSource`n", [Text.UTF8Encoding]::new($false))
     Copy-Item -LiteralPath (Join-Path $script:RewRoot "dist") -Destination (Join-Path $stageRoot "dist") -Recurse -Force
 
     $tar = Get-Command tar.exe -ErrorAction Stop
@@ -48,6 +57,7 @@ try {
     $listing = (& $tar.Source -tf $archivePath | Out-String)
     foreach ($required in @(
       "$folderName/LICENSE",
+      "$folderName/release-source.json",
       "$folderName/scripts/Install.ps1",
       "$folderName/scripts/Acceptance-InstallUninstall.ps1",
       "$folderName/plugins/runtime-evolution-workbench/.codex-plugin/plugin.json",
@@ -71,8 +81,6 @@ try {
 
   $checksum = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
   [System.IO.File]::WriteAllText($checksumPath, "$checksum  runtime-evolution-workbench-$Version.zip`n")
-  $commit = (git rev-parse HEAD | Out-String).Trim()
-  if ($LASTEXITCODE -ne 0 -or $commit -notmatch '^[0-9a-f]{40}$') { throw "Could not resolve release commit." }
   $manifest = [ordered]@{
     schema_version = "runtime-evolution-workbench.release.v1"
     version = $Version
