@@ -11,6 +11,7 @@ $node = Resolve-RewNode
 $vitest = Join-Path $script:RewRoot "node_modules\vitest\vitest.mjs"
 $pluginValidator = Join-Path $PSScriptRoot "validate-plugin.mjs"
 $releaseDependencyValidator = Join-Path $PSScriptRoot "validate-release-dependencies.mjs"
+$productGateProbe = Join-Path $script:RewRoot "spikes\product-gate-probe.mjs"
 
 Push-Location $script:RewRoot
 try {
@@ -20,6 +21,8 @@ try {
   if ($LASTEXITCODE -ne 0) { throw "Plugin validation failed." }
   & $node $releaseDependencyValidator
   if ($LASTEXITCODE -ne 0) { throw "Release dependency validation failed." }
+  & $node --check $productGateProbe
+  if ($LASTEXITCODE -ne 0) { throw "Product-gate probe syntax validation failed." }
 } finally {
   Pop-Location
 }

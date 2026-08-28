@@ -34,7 +34,7 @@ try {
     [Environment]::SetEnvironmentVariable("REW_GATE_OUTPUT", $evidencePath, "Process")
     $node = Resolve-RewNode
     & $node (Join-Path $script:RewRoot "spikes\product-gate-probe.mjs")
-    if ($LASTEXITCODE -ne 0) { throw "Real Hook/App Server product gate failed." }
+    if ($LASTEXITCODE -ne 0) { throw "Real Hook/App Server evolution-closure gate failed." }
   } finally {
     [Environment]::SetEnvironmentVariable("REW_GATE_DATA_DIR", $previousData, "Process")
     [Environment]::SetEnvironmentVariable("REW_GATE_OUTPUT", $previousOutput, "Process")

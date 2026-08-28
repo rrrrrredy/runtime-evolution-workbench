@@ -34,6 +34,8 @@ Runtime Evolution Workbench never claims to read hidden reasoning.
 
 Approval is enabled only when the four objective verifier cells support the candidate: failure-baseline fails, failure-candidate passes, and both protection cells pass. The workbench never auto-publishes.
 
+The code-freeze release gate does not accept a chat reply as proof. It creates a disposable repository and requires six real Codex App Server Runs to reproduce an objective failure and protection case, produce the four-cell verifier matrix, publish the approved `AGENTS.md` candidate, preserve a later user edit as a rollback conflict, and finally restore the exact original. Clean-machine installation and human UI acceptance are still required before a stable label.
+
 ## Quick start
 
 Requirements:

@@ -23,7 +23,7 @@ After every code and documentation change is committed, run:
 .\scripts\Prepare-ReleaseEvidence.ps1 -Version 0.1.0
 ```
 
-The script repeats the full check and uses the local authenticated Codex to prove ordinary Hook ingestion, explicit ordinary-Run gaps, stored-thread mapping loss when available, a real managed App Server turn, live structured events, and reasoning exclusion. Any missing condition fails. Temporary Run data is deleted after the probe.
+The script repeats the full check and uses the local authenticated Codex to prove two different things. First, ordinary Hook ingestion survives independently and declares its App Server observation gap. Second, a disposable Git repository must complete the real product loop: reproduce one objective failure, pass a distinct protection Run, create an evidence-backed Issue and one-file `AGENTS.md` proposal, execute the four real App Server comparison cells, obtain the `fail/pass/pass/pass` verifier matrix, approve and publish, preserve a later user edit as a rollback conflict, then restore the exact original. All six managed Runs must retain live structured events and explicit reasoning exclusion. Any missing condition fails, and temporary Run/repository data is deleted after the probe.
 
 The sanitized JSON includes product, Node, Codex, and tested commit versions, but no local path, prompt history, credential, or repository content. Review it and commit only `release-evidence/runtime-product-gate-0.1.0.json`.
 
@@ -36,8 +36,9 @@ The tag workflow verifies that:
 1. the evidence names the expected product and version;
 2. every real gate condition passed with the supported Codex version;
 3. the tested commit is an ancestor of the tag;
-4. the evidence file is the only change after the tested commit.
+4. the evidence file is the only change after the tested commit;
+5. the evidence uses `product.runtime-evolution-gate.v2` and proves the complete failure-to-safe-rollback closure rather than an exact-response smoke test.
 
 It then repeats offline checks and the UI gate, creates a Windows archive containing reviewed source plus compiled server/UI, verifies required files, emits a commit-bound manifest and SHA-256, attaches build provenance, and publishes the GitHub Release.
 
-Fresh Windows installation, a real failure→proposal→four-cell comparison→publish→rollback closure, uninstall, and no-residue evidence remain the final stable-release gate.
+Fresh Windows installation, user-visible UI review, uninstall, and no-residue evidence remain the final stable-release gate. The authenticated code-freeze evidence proves the same core closure through the product services; it does not substitute for clean-machine installation or human UI acceptance.
