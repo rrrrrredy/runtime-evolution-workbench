@@ -58,3 +58,52 @@ jobs:
           name: runtime-installation-evidence
           path: ${{ runner.temp }}\runtime-installation-evidence.json
           if-no-files-found: error
+
+  portable-lifecycle:
+    name: ${{ matrix.platform }} lifecycle
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            platform: linux
+          - os: macos-14
+            platform: macos
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: product
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          path: product
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.23.2'
+          cache: npm
+          cache-dependency-path: product/package-lock.json
+      - name: Build and run portable safety tests
+        run: |
+          npm ci
+          npm run build:server
+          npm run build:web
+          npm run test:portable
+      - name: Install pinned Codex CLI for isolated plugin lifecycle
+        run: npm install --global @openai/codex@0.150.0-alpha.8
+      - name: Install, start, inspect, restart, uninstall, and prove absence
+        env:
+          CODEX_HOME: ${{ runner.temp }}/codex-home
+          REW_PORTABLE_TEST_DATA_DIR: ${{ runner.temp }}/runtime-data
+          REW_PORTABLE_EVIDENCE_DIR: ${{ runner.temp }}/runtime-portable-evidence
+        run: |
+          mkdir -p "$CODEX_HOME"
+          chmod +x scripts/*.sh
+          ./scripts/Acceptance-Portable.sh
+      - name: Upload portable lifecycle evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: runtime-${{ matrix.platform }}-lifecycle-evidence
+          path: ${{ runner.temp }}/runtime-portable-evidence
+          if-no-files-found: error

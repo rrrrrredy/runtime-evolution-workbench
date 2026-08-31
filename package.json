@@ -25,6 +25,7 @@
     "start": "node dist/server/index.js",
     "mcp": "node plugins/runtime-evolution-workbench/scripts/mcp-server.mjs",
     "test": "vitest run",
+    "test:portable": "node --test scripts/portable-lifecycle.test.mjs",
     "probe:observed": "node spikes/app-server-probe.mjs",
     "probe:managed": "node spikes/managed-run-probe.mjs",
     "probe:ui": "node spikes/ui-synthetic-probe.mjs"

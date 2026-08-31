@@ -40,4 +40,6 @@ Passing a build is not product acceptance. Version 0.1 may be labeled stable onl
 
 The repeatable clean-user lifecycle portion is encoded in `scripts\Acceptance-InstallUninstall.ps1` and runs on a fresh GitHub-hosted Windows VM. The authenticated code-freeze gate executes the real failure-to-safe-evolution service closure with six real Codex Runs. Human review of the three UI surfaces and clean-machine installation remain separate acceptance evidence; neither result substitutes for the other.
 
+`scripts/Acceptance-Portable.sh` repeats the plugin/service/preservation/removal lifecycle on GitHub-hosted Ubuntu and macOS with isolated Codex and product homes. It proves source/archive lifecycle compatibility only. It does not authenticate a model, exercise a physical Mac, or replace the real failure-to-evolution product gate.
+
 Record the OS, Codex version, Node version, commit, commands, objective verifier outputs, exported protocol documents, screenshots, known limitations, and uninstall evidence. Do not substitute mocks or unit tests for this clean-environment report.

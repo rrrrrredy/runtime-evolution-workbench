@@ -17,6 +17,8 @@ Push-Location $script:RewRoot
 try {
   & $node $vitest run
   if ($LASTEXITCODE -ne 0) { throw "Test suite failed." }
+  & $node --test (Join-Path $PSScriptRoot "portable-lifecycle.test.mjs")
+  if ($LASTEXITCODE -ne 0) { throw "Portable lifecycle tests failed." }
   & $node $pluginValidator
   if ($LASTEXITCODE -ne 0) { throw "Plugin validation failed." }
   & $node $releaseDependencyValidator

@@ -4,6 +4,7 @@ All notable changes are recorded here. The project follows semantic versioning a
 
 ## [Unreleased]
 
+- Added ownership-safe Linux/macOS install, start, stop, inspection, and uninstall entry points. Hosted Ubuntu and macOS CI now proves plugin registration, loopback service restart, explicit data deletion, and final absence without presenting that evidence as a physical-Mac or authenticated-Codex result.
 - CI and release UI gates now check out the exact RunCase Interchange `v0.1.2` commit used by the product dependency instead of mixing protocol releases in one evidence chain.
 - Capability publication and rollback now journal every transition, move the old target into a unique same-volume recovery directory, install only into an absent path, preserve atomic-save and old-handle edits, and reconcile process interruptions without clobbering either version.
 - The installer refuses a foreign same-name Startup shortcut; inspection reports the collision, uninstall removes only a marked shortcut, COM readers are released before removal, and non-Windows checks skip only this Windows-specific fixture.

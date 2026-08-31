@@ -4,6 +4,8 @@
 
 Version 0.1 targets Windows 11, Node 22.x, Git, PowerShell, and a Codex installation that provides the plugin CLI and App Server used by this release. Node 20 cannot run the product because the local store uses Node 22's built-in SQLite API.
 
+The 0.2 portable preview adds source/archive lifecycle entry points for Linux and macOS. GitHub-hosted Ubuntu and macOS jobs install the Codex plugin into an isolated Codex home, start the loopback service, inspect it, restart it, uninstall it, and prove registration/data absence. This is hosted-environment compatibility evidence, not a physical Mac or authenticated model acceptance claim. Node 22, Git, and the Codex CLI remain required.
+
 Run installation and the long-lived workbench service from a normal Windows Terminal or PowerShell session. A service launched from inside an already sandboxed Codex command inherits an outer OS permission boundary that a nested App Server cannot repair; observed Run capture still works, but managed comparisons will fail their no-model workspace preflight instead of silently broadening access.
 
 ## Install from a checkout
@@ -25,6 +27,18 @@ The script fails before changing Codex state if Node is not 22.x or release chec
 It does not enable Windows startup unless `-EnableStartup` is supplied. It does not upload Run data or install a system-wide Windows service.
 
 Restart Codex so the new Hooks, MCP tools, and Skill are loaded.
+
+On Linux or macOS, use the portable entry point from a release archive or a built checkout:
+
+```bash
+npm ci
+npm run build:server
+npm run build:web
+chmod +x scripts/*.sh
+./scripts/Install.sh --open
+```
+
+`Install.sh` installs the exact production npm dependencies, registers this checkout as the Codex marketplace, installs the plugin, and starts the same loopback service. It does not create a systemd unit or macOS LaunchAgent; use `Start.sh` after signing in. Pass `--no-start`, `--port`, `--data-dir`, or `--marketplace-source` when needed.
 
 ## Installer options
 
@@ -57,6 +71,15 @@ For foreground diagnostics:
 ```powershell
 .\scripts\Start.ps1 -Foreground
 ```
+
+Linux/macOS use:
+
+```bash
+./scripts/Start.sh --open
+./scripts/Stop.sh
+```
+
+The portable launcher writes an ownership-bound service record and checks the live process command before signaling it. It refuses to stop a reachable service when the matching record is missing.
 
 ## Upgrade
 
@@ -98,5 +121,15 @@ Verify the final machine state without changing it:
 The first command permits the data preserved by the default uninstall. The second is the strict zero-data check after an explicit `-DeleteData` uninstall. Both fail when Codex plugin/marketplace state cannot be inspected instead of claiming success from missing evidence.
 
 The script deletes only a real directory carrying a valid Runtime Evolution Workbench ownership marker. It also rejects files, reparse points, a drive root, user profile, Documents, Local AppData root, or another suspiciously broad path. `-DeleteData` is not recoverable by the product. Export important Runs first.
+
+Linux/macOS equivalents use long options:
+
+```bash
+./scripts/Uninstall.sh
+./scripts/Uninstall.sh --delete-data
+./scripts/Inspect-Installation.sh --require-absent --require-no-data
+```
+
+Portable uninstall preserves data by default and will delete only an exact real directory carrying this product's marker. It does not remove the source or extracted release directory.
 
 Release CI also executes `scripts\Acceptance-InstallUninstall.ps1` in an isolated Codex home. It occupies the service port to prove a failed first install removes every newly created product state, then repeats the fault during `-Repair` and requires the prior plugin, marketplace, Startup shortcut, and data to survive byte-for-byte where applicable. It then proves real registration, a loopback service, data preservation, reinstall, ownership-marked explicit deletion, and machine-audited zero product registration after removal. This lifecycle gate does not replace the authenticated Codex Run evidence described in the release process.
