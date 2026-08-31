@@ -31,6 +31,8 @@ The archive embeds `release-source.json`, so its installation lifecycle can iden
 
 ## Tag gate
 
+The reviewed repository must be made public before the release tag is pushed. GitHub does not issue build-provenance attestations for a private repository owned by an individual account. Make the repository public only after the authenticated gate and final reviews pass, immediately enable secret scanning, push protection, Dependabot security updates, and strict `main` checks, and then push the tag. The release workflow fails before checkout when the repository is still private.
+
 The tag workflow verifies that:
 
 1. the evidence names the expected product and version;

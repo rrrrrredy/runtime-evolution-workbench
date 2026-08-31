@@ -20,6 +20,12 @@ jobs:
         shell: pwsh
         working-directory: product
     steps:
+      - name: Require public repository for provenance
+        working-directory: ${{ github.workspace }}
+        run: |
+          if ("${{ github.event.repository.visibility }}" -ne "public") {
+            throw "Publish the reviewed repository and enable public protections before pushing a release tag; GitHub cannot attest a private personal repository."
+          }
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           path: product

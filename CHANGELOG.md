@@ -4,6 +4,7 @@ All notable changes are recorded here. The project follows semantic versioning a
 
 ## [Unreleased]
 
+- Tag publishing now fails immediately while the repository is private, matching GitHub's provenance-attestation boundary for individual accounts and the documented public-before-tag release order.
 - The exact RunCase Interchange SHA-512 lock now matches the anonymously downloaded and provenance-verified public `v0.1.0` prerelease asset.
 - GitHub tag releases now require curated, version-matched adoption notes and are labeled prereleases so the public release surface matches the product's technical-preview status.
 - Installation is now transactional across the product-created data root, plugin, marketplace, Startup shortcut, service startup, and failed `-Repair`; the clean-Windows gate injects real port conflicts and requires restoration plus a machine-readable zero-residue audit.
