@@ -93,7 +93,7 @@ jobs:
             $property = $evidence.checks.PSObject.Properties[$check]
             if ($null -eq $property -or -not [bool]$property.Value) { throw "Installation evidence failed or omitted: $check" }
           }
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: runtime-windows-candidate
           path: candidate
@@ -128,7 +128,7 @@ jobs:
           npm run check
           version="${GITHUB_REF_NAME#v}"
           node scripts/Package-Portable-Release.mjs --version "$version" --output "$GITHUB_WORKSPACE/candidate"
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: runtime-portable-candidate
           path: candidate
@@ -175,7 +175,7 @@ jobs:
           mv "$REW_PORTABLE_EVIDENCE_DIR/running.json" "$REW_PORTABLE_EVIDENCE_DIR/runtime-${{ matrix.platform }}-running.json"
           mv "$REW_PORTABLE_EVIDENCE_DIR/absent.json" "$REW_PORTABLE_EVIDENCE_DIR/runtime-${{ matrix.platform }}-absent.json"
           mv "$REW_PORTABLE_EVIDENCE_DIR/uninstall.txt" "$REW_PORTABLE_EVIDENCE_DIR/runtime-${{ matrix.platform }}-uninstall.txt"
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: runtime-${{ matrix.platform }}-archive-evidence
           path: ${{ runner.temp }}/runtime-portable-evidence
