@@ -4,12 +4,34 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { assertDataRoot, assertSafeDataPath, initializeDataRoot, parseArguments, removeOwnedDataRoot } from "./portable-lifecycle.mjs";
+import {
+  assertDataRoot,
+  assertSafeDataPath,
+  initializeDataRoot,
+  marketplaceListingContains,
+  parseArguments,
+  pluginListingContains,
+  removeOwnedDataRoot
+} from "./portable-lifecycle.mjs";
 
 test("portable arguments and unsafe roots fail closed", () => {
   assert.equal(parseArguments(["start", "--port", "43119"]).port, 43119);
   assert.throws(() => parseArguments(["start", "--port", "80"]), /between 1024 and 65535/);
   assert.throws(() => assertSafeDataPath("/"), /unsafe/);
+});
+
+test("Codex aligned plugin and marketplace tables are parsed exactly", () => {
+  assert.equal(
+    pluginListingContains(
+      "runtime-evolution-workbench@runtime-evolution-workbench    installed, enabled  0.1.0  /tmp/plugin",
+      "runtime-evolution-workbench@runtime-evolution-workbench"
+    ),
+    true
+  );
+  assert.equal(
+    marketplaceListingContains("MARKETPLACE ROOT\nruntime-evolution-workbench  /tmp/source", "runtime-evolution-workbench"),
+    true
+  );
 });
 
 test("portable data deletion requires the exact product marker", () => {
