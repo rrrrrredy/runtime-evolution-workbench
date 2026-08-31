@@ -253,13 +253,13 @@ function openUrl(url) {
 
 async function startService(options) {
   requireNode22();
-  const { dataDir } = initializeDataRoot(options.dataDir);
   const server = resolve(repositoryRoot, "dist", "server", "index.js");
   const web = resolve(repositoryRoot, "dist", "web", "index.html");
   if (!existsSync(server) || !existsSync(web)) fail("Production build is missing. Install from a release archive or run npm run build first.");
   if (!existsSync(resolve(repositoryRoot, "node_modules", "fastify", "package.json"))) {
     fail("Runtime dependencies are missing. Run Install.sh without --skip-dependencies.");
   }
+  const { dataDir } = initializeDataRoot(options.dataDir);
   const currentHealth = await health(options.port);
   if (currentHealth) {
     if (currentHealth.product !== product) fail(`Port ${options.port} is already serving another application.`);
