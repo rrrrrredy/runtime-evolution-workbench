@@ -46,7 +46,7 @@ Requirements:
 - a working Codex CLI/Desktop installation with `codex` on `PATH`;
 - PowerShell 7 on Windows, or Bash on Linux/macOS.
 
-Install and start the long-lived service from a normal Windows Terminal or PowerShell session, not from a command that is already inside a Codex sandbox. Managed comparisons deliberately fail their no-model workspace preflight rather than falling back to unsandboxed execution.
+Install and start the long-lived service from a normal host terminal: Windows Terminal or PowerShell on Windows, and Bash on Linux/macOS. Do not start it from a command that is already inside a Codex sandbox. Managed comparisons deliberately fail their no-model workspace preflight rather than falling back to unsandboxed execution.
 
 On Windows, download `runtime-evolution-workbench-0.2.0.zip` and its `.sha256` file from the same GitHub Release. Verify the archive, extract it, inspect the installer, then run:
 
@@ -88,9 +88,9 @@ See [installation and removal](docs/installation.md) for the exact state changes
 ## Normal use
 
 1. Use Codex normally. Hooks write redacted, atomic event envelopes to a local spool even when the workbench service is closed.
-2. Open the local workbench with `.\scripts\Start.ps1 -Open` and label the result or save a correction.
+2. Open the local workbench with `.\scripts\Start.ps1 -Open` on Windows or `./scripts/Start.sh --open` on Linux/macOS, then label the result or save a correction.
 3. Backfill a stored Codex Thread if needed. Treat the declared mapping gaps as part of the evidence.
-4. Optionally open **Protocol library** on the Runs page and import a `workflow.case.v1` or `workflow.score.v1` file from Workflow Environment Factory. Imports are validated, redacted again, and kept read-only in this product's own database.
+4. Optionally open **Protocol library** on the Runs page and import an `agent.run.v1`, `workflow.case.v1`, or `workflow.score.v1` file. Imports are validated, redacted again, and kept read-only in this product's own database. An external Run does not enter Runs, Issues, or Evolution Lab as a native Codex experiment.
 5. Create an Issue only when a Run or correction supports it. Keep counterevidence attached.
 6. Create a proposal for exactly one `AGENTS.md` or one `SKILL.md`, using a failure Run and a distinct protection Run.
 7. Supply objective verifier commands. The workbench creates detached Git worktrees and runs exactly four cells.
@@ -118,14 +118,22 @@ Read [privacy and security](docs/privacy-and-security.md) before using the previ
 .\scripts\Uninstall.ps1
 ```
 
+```bash
+./scripts/Uninstall.sh
+```
+
 This stops the service and removes the Codex plugin, marketplace entry, and optional startup shortcut. It preserves Run data by default. To permanently remove the product data as an explicit separate choice:
 
 ```powershell
 .\scripts\Uninstall.ps1 -DeleteData
 ```
 
+```bash
+./scripts/Uninstall.sh --delete-data
+```
+
 All entry points create only a nonexistent data directory or reuse one with this product's marker; existing unmarked directories are rejected. The uninstaller also rejects files/reparse points and broad protected locations, and never deletes the source checkout.
-To obtain machine-readable proof that no service, PID file, Startup shortcut, plugin, or marketplace registration remains, run `./scripts/Inspect-Installation.ps1 -RequireAbsent`; add `-RequireNoData` only after an intentional `-DeleteData` uninstall.
+To obtain machine-readable proof that no service, PID file, Startup shortcut, plugin, or marketplace registration remains, run `.\scripts\Inspect-Installation.ps1 -RequireAbsent` on Windows or `./scripts/Inspect-Installation.sh --require-absent` on Linux/macOS. Add the platform's no-data flag only after an intentional data-deleting uninstall.
 
 ## Architecture
 

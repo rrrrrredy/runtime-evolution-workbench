@@ -147,7 +147,7 @@ export function RunsView({ runs, onDataChanged }: { runs: RunSummary[]; onDataCh
     return (
       <div className="page-frame">
         <SectionHeading eyebrow="Local evidence" title="Runs" action={<div className="button-row"><button onClick={() => setProtocolLibrary(true)}><BookOpenCheck size={16} /> Protocol library</button><button className="primary-button" onClick={() => void openThreadPicker()}><ArrowDownToLine size={16} /> Backfill</button></div>} />
-        <EmptyState title="No Runs retained yet" action={<div className="button-row"><button onClick={() => setProtocolLibrary(true)}>Import Case or Score</button><button className="primary-button" onClick={() => void openThreadPicker()}>Backfill a stored Codex Thread</button></div>}>
+        <EmptyState title="No Runs retained yet" action={<div className="button-row"><button onClick={() => setProtocolLibrary(true)}>Import Run, Case, or Score</button><button className="primary-button" onClick={() => void openThreadPicker()}>Backfill a stored Codex Thread</button></div>}>
           Install the plugin for ordinary lifecycle capture, or import a stored Thread through App Server. A missing Run is never presented as a complete Trace.
         </EmptyState>
         {threadPicker ? <ThreadPicker threads={threads} busy={busy} onClose={() => setThreadPicker(false)} onBackfill={backfill} /> : null}
@@ -340,7 +340,7 @@ function ProtocolLibrary({ onClose }: { onClose: () => void }) {
           <div><div className="eyebrow">Portable evidence</div><h2>Protocol library</h2></div>
           <button className="icon-button" onClick={onClose} aria-label="Close protocol library"><X size={18} /></button>
         </header>
-        <p className="muted">Import a versioned Run, Case, or Score JSON file. It is validated, redacted again, and kept in this product's own local database.</p>
+        <p className="muted">Import a versioned Run, Case, or Score JSON file. It is validated, redacted again, and kept in this product's own local database. External Runs remain read-only and do not become native Codex experiments.</p>
         <div className="protocol-toolbar">
           <label className="primary-button protocol-upload">
             <Upload size={15} /> {busy ? "Checking…" : "Import JSON"}
