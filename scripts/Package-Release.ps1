@@ -1,5 +1,5 @@
 param(
-  [string]$Version = "0.1.0",
+  [string]$Version = "0.2.0",
   [string]$OutputDirectory = ""
 )
 
@@ -88,16 +88,17 @@ try {
     version = $Version
     commit = $commit
     release_tier = "technical_preview"
-    supported_platforms = @("windows-11-x64")
-    unsupported_platforms = @("macos", "linux")
+    supported_platforms = @("windows-11-x64", "linux-x64", "macos-arm64")
+    unverified_platforms = @("macos-x64", "linux-arm64")
     authenticated_product_gate = [ordered]@{
       status = "not_run"
       evidence_included = $false
-      claim = "A GitHub-hosted Windows archive lifecycle is separate from the not-run real authenticated Codex and ordinary user-owned Windows 11 acceptance gates."
+      claim = "Hosted Windows/Linux/macOS archive lifecycles are separate from the not-run authenticated Codex and physical-machine acceptance gates."
     }
     protocol_dependency = [string]$package.dependencies.'@runcase/interchange'
     archive = [ordered]@{
       file = [System.IO.Path]::GetFileName($archivePath)
+      platform = "windows-11-x64"
       sha256 = $checksum
       bytes = (Get-Item -LiteralPath $archivePath).Length
     }

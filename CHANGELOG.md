@@ -4,6 +4,8 @@ All notable changes are recorded here. The project follows semantic versioning a
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-31
+
 - Added ownership-safe Linux/macOS install, start, stop, inspection, and uninstall entry points. Hosted Ubuntu and macOS CI now proves plugin registration, loopback service restart, explicit data deletion, and final absence without presenting that evidence as a physical-Mac or authenticated-Codex result.
 - CI and release UI gates now check out the exact RunCase Interchange `v0.1.2` commit used by the product dependency instead of mixing protocol releases in one evidence chain.
 - Capability publication and rollback now journal every transition, move the old target into a unique same-volume recovery directory, install only into an absent path, preserve atomic-save and old-handle edits, and reconcile process interruptions without clobbering either version.
@@ -17,7 +19,7 @@ All notable changes are recorded here. The project follows semantic versioning a
 - Installation is now transactional across the product-created data root, plugin, marketplace, Startup shortcut, service startup, and failed `-Repair`; the clean-Windows gate injects real port conflicts and requires restoration plus a machine-readable zero-residue audit.
 - Every entry point now creates only a previously nonexistent data directory or reuses one with a valid product ownership marker; it rejects existing unmarked directories, wrong-product markers, reparse points, and protected roots.
 - The isolated Windows install/start/preserve/reinstall/delete/uninstall lifecycle gate is implemented; fresh hosted-Windows and full golden-closure evidence remain pending.
-- Public release packaging and compatibility matrix pending.
+- Added commit-bound Windows and portable release archives; tag publication now waits for extracted-archive lifecycle evidence on Windows, Ubuntu, and Apple Silicon macOS.
 - Read-only RunCase Interchange library for validated, redacted, idempotent Run/Case/Score imports.
 - Windows comparison cleanup now waits for child-process pipes to close and normalizes 8.3 repository paths.
 - Windows CI blocks on one asserted UI golden scenario; tag releases require commit-bound local Hook/App Server evidence without storing model credentials in GitHub.

@@ -2,9 +2,9 @@
 
 ## Supported preview environment
 
-Version 0.1 targets Windows 11, Node 22.x, Git, PowerShell, and a Codex installation that provides the plugin CLI and App Server used by this release. Node 20 cannot run the product because the local store uses Node 22's built-in SQLite API.
+Version 0.2 targets Windows 11 x64, Linux x64, and Apple Silicon macOS with Node 22.x, Git, and a Codex installation that provides the plugin CLI and App Server used by this release. Windows uses PowerShell; Linux and macOS use Bash. Node 20 cannot run the product because the local store uses Node 22's built-in SQLite API.
 
-The 0.2 portable preview adds source/archive lifecycle entry points for Linux and macOS. GitHub-hosted Ubuntu and macOS jobs install the Codex plugin into an isolated Codex home, start the loopback service, inspect it, restart it, uninstall it, and prove registration/data absence. This is hosted-environment compatibility evidence, not a physical Mac or authenticated model acceptance claim. Node 22, Git, and the Codex CLI remain required.
+GitHub-hosted Windows, Ubuntu, and macOS jobs install from the tagged archives into isolated Codex homes, start the loopback service, inspect it, restart it, uninstall it, and prove registration/data absence. This is hosted-environment compatibility evidence, not a physical Mac or authenticated model acceptance claim.
 
 Run installation and the long-lived workbench service from a normal Windows Terminal or PowerShell session. A service launched from inside an already sandboxed Codex command inherits an outer OS permission boundary that a nested App Server cannot repair; observed Run capture still works, but managed comparisons will fail their no-model workspace preflight instead of silently broadening access.
 
@@ -91,7 +91,7 @@ git pull --ff-only
 .\scripts\Install.ps1 -Repair -Open
 ```
 
-Back up `%LOCALAPPDATA%\RuntimeEvolutionWorkbench` before a preview upgrade. Schema migrations will be documented in the changelog; 0.1 does not promise downgrade compatibility.
+Back up the product data directory before a preview upgrade. Schema migrations will be documented in the changelog; 0.2 does not promise downgrade compatibility.
 
 ## Offline behavior
 

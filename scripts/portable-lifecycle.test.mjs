@@ -23,7 +23,7 @@ test("portable arguments and unsafe roots fail closed", () => {
 test("Codex aligned plugin and marketplace tables are parsed exactly", () => {
   assert.equal(
     pluginListingContains(
-      "runtime-evolution-workbench@runtime-evolution-workbench    installed, enabled  0.1.0  /tmp/plugin",
+      "runtime-evolution-workbench@runtime-evolution-workbench    installed, enabled  0.2.0  /tmp/plugin",
       "runtime-evolution-workbench@runtime-evolution-workbench"
     ),
     true

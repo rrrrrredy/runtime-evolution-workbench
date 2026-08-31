@@ -98,7 +98,7 @@ export async function createWorkbenchApp(deps: AppDependencies): Promise<Fastify
   const app = Fastify({ logger: false, bodyLimit: 2 * 1024 * 1024 });
   await app.register(cookie);
 
-  app.get("/health", async () => ({ ok: true, product: "runtime-evolution-workbench", version: "0.1.0" }));
+  app.get("/health", async () => ({ ok: true, product: "runtime-evolution-workbench", version: "0.2.0" }));
 
   app.get<{ Params: { token: string } }>("/session/:token", async (request, reply) => {
     if (!tokenMatches(deps.sessionToken, request.params.token)) return reply.code(404).send({ error: "not_found" });
@@ -120,7 +120,7 @@ export async function createWorkbenchApp(deps: AppDependencies): Promise<Fastify
 
   app.get("/api/meta", async () => ({
     product: "Runtime Evolution Workbench",
-    version: "0.1.0",
+    version: "0.2.0",
     captureBoundary: "Observed Runs are best effort; Managed Runs retain live structured events and explicit exclusions.",
     dataDir: deps.config.dataDir
   }));

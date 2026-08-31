@@ -21,7 +21,7 @@ for (const path of requiredFiles) {
 }
 
 const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-if (manifest.name !== "runtime-evolution-workbench" || manifest.version !== "0.1.0") {
+if (manifest.name !== "runtime-evolution-workbench" || manifest.version !== "0.2.0") {
   throw new Error("Plugin name/version does not match the release contract.");
 }
 if (manifest.mcpServers !== "./.mcp.json" || manifest.skills !== "./skills/") {

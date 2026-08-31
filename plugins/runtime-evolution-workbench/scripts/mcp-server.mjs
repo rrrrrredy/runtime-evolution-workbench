@@ -188,7 +188,7 @@ async function handle(message) {
       send({ jsonrpc: "2.0", id: message.id, result: {
         protocolVersion: supported.includes(requested) ? requested : "2025-11-25",
         capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: "runtime-evolution-workbench", version: "0.1.0" }
+        serverInfo: { name: "runtime-evolution-workbench", version: "0.2.0" }
       } });
       return;
     }

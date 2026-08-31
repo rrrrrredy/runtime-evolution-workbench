@@ -1,6 +1,6 @@
 {
   "name": "runtime-evolution-workbench",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Capture Codex Runs locally and turn failures and corrections into evidence-backed AGENTS.md or Skill experiments.",
   "author": {
     "name": "Song Luo"

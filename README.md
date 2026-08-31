@@ -10,9 +10,7 @@ It is not another trace dashboard. The product is useful when a Run is over:
 4. require objective verifier results and a human approval before publishing;
 5. refuse to overwrite a file that changed after the proposal was created.
 
-> **Release status:** 0.1 technical preview for Windows 11 and Codex. CI covers the product, release archive, a GitHub-hosted Windows archive lifecycle, and synthetic UI; this preview does not claim a real authenticated Codex run or acceptance on an ordinary user-owned Windows 11 machine and must not be labeled stable.
-
-macOS is not supported by the 0.1 installer or lifecycle tools. The Node service, web UI, Hooks, MCP server, and Codex App Server boundary are largely portable, but running those pieces from source is not a supported Mac installation.
+> **Release status:** 0.2 technical preview for Codex on Windows 11 x64, Linux x64, and Apple Silicon macOS. The tag workflow exercises each downloadable archive on GitHub-hosted runners. No physical Mac, ordinary user-owned clean machine, or authenticated Codex model run was used, so this release is not labeled stable.
 
 ![Runtime Evolution Workbench Runs page with synthetic demo data](docs/images/ui-desktop-runs-synthetic.png)
 
@@ -36,33 +34,44 @@ Runtime Evolution Workbench never claims to read hidden reasoning.
 
 Approval is enabled only when the four objective verifier cells support the candidate: failure-baseline fails, failure-candidate passes, and both protection cells pass. The workbench never auto-publishes.
 
-The optional authenticated code-freeze gate does not accept a chat reply as proof. It creates a disposable repository and requires six real Codex App Server Runs to reproduce an objective failure and protection case, produce the four-cell verifier matrix, publish the approved `AGENTS.md` candidate, preserve a later user edit as a rollback conflict, and finally restore the exact original. Version 0.1.0 is published without that evidence and records the omission in its attested release manifest; the gate remains mandatory before any stable label.
+The optional authenticated code-freeze gate does not accept a chat reply as proof. It creates a disposable repository and requires six real Codex App Server Runs to reproduce an objective failure and protection case, produce the four-cell verifier matrix, publish the approved `AGENTS.md` candidate, preserve a later user edit as a rollback conflict, and finally restore the exact original. Version 0.2.0 is published without that evidence and records the omission in its attested release manifests; the gate remains mandatory before any stable label.
 
 ## Quick start
 
 Requirements:
 
-- Windows 11;
+- Windows 11 x64, Linux x64, or Apple Silicon macOS;
 - Node.js 22.x, not Node 20 or 23;
 - Git;
 - a working Codex CLI/Desktop installation with `codex` on `PATH`;
-- PowerShell 7 recommended.
+- PowerShell 7 on Windows, or Bash on Linux/macOS.
 
 Install and start the long-lived service from a normal Windows Terminal or PowerShell session, not from a command that is already inside a Codex sandbox. Managed comparisons deliberately fail their no-model workspace preflight rather than falling back to unsandboxed execution.
 
-Download `runtime-evolution-workbench-0.1.0.zip` and its `.sha256` file from the same GitHub Release. Verify the archive, extract it, inspect the installer, then run:
+On Windows, download `runtime-evolution-workbench-0.2.0.zip` and its `.sha256` file from the same GitHub Release. Verify the archive, extract it, inspect the installer, then run:
 
 ```powershell
-$archive = '.\runtime-evolution-workbench-0.1.0.zip'
+$archive = '.\runtime-evolution-workbench-0.2.0.zip'
 $expected = (Get-Content "$archive.sha256").Split()[0]
 $actual = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant()
 if ($actual -ne $expected) { throw 'Runtime Evolution Workbench archive checksum mismatch.' }
 Expand-Archive $archive -DestinationPath .
-Set-Location runtime-evolution-workbench-0.1.0
+Set-Location runtime-evolution-workbench-0.2.0
 .\scripts\Install.ps1 -Open
 ```
 
-The same release contains a commit-bound manifest and GitHub build-provenance attestation. Add `-EnableStartup` only if you want the local service to start when the current Windows user signs in. The installer runs the complete release check, registers this checkout as a Codex marketplace, installs the plugin, and starts the loopback-only service. Restart Codex after installation.
+On Linux or Apple Silicon macOS, download `runtime-evolution-workbench-0.2.0-portable.tar.gz` and its `.sha256` file, then run:
+
+```bash
+archive=runtime-evolution-workbench-0.2.0-portable.tar.gz
+node -e 'const fs=require("node:fs"),c=require("node:crypto");const p=process.argv[1],e=fs.readFileSync(p+".sha256","utf8").trim().split(/\s+/)[0],a=c.createHash("sha256").update(fs.readFileSync(p)).digest("hex");if(a!==e)process.exit(1)' "$archive"
+tar -xzf "$archive"
+cd runtime-evolution-workbench-0.2.0
+chmod +x scripts/*.sh
+./scripts/Install.sh --open
+```
+
+The release contains commit-bound manifests and GitHub build-provenance attestations. Windows startup is opt-in through `-EnableStartup`; the portable installer deliberately creates no systemd unit or LaunchAgent. Both installers register the extracted checkout as a Codex marketplace, install the plugin, and start the loopback-only service. Restart Codex after installation.
 
 For source development or a portable Node build, clone the repository and set the executable explicitly:
 
@@ -129,7 +138,7 @@ To obtain machine-readable proof that no service, PID file, Startup shortcut, pl
 Runtime Evolution Workbench does not share its service, database, queue, UI, executor, or business code with Workflow Environment Factory. See [architecture](docs/architecture.md).
 The exact portable-file boundary is documented in [protocol interoperability](docs/protocol.md).
 
-## Deliberate non-goals for 0.1
+## Deliberate non-goals for 0.2
 
 No cloud sync, team permissions, model training, automatic publication, arbitrary capability-file editing, modification of Codex Hook/MCP configuration, other Agent products, or claims based on hidden reasoning. A generic trace viewer is not the product.
 
