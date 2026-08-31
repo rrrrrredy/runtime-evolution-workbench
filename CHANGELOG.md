@@ -5,7 +5,7 @@ All notable changes are recorded here. The project follows semantic versioning a
 ## [Unreleased]
 
 - Capability publication and rollback now stage same-directory files, flush and verify their bytes, recheck the expected digest immediately before atomic replacement, preserve last-moment user edits, and reconcile an interrupted commit on the next action.
-- The installer refuses a foreign same-name Startup shortcut; inspection reports the collision, and uninstall removes only a shortcut carrying this product's ownership marker.
+- The installer refuses a foreign same-name Startup shortcut; inspection reports the collision, uninstall removes only a marked shortcut, COM readers are released before removal, and non-Windows checks skip only this Windows-specific fixture.
 - Managed baseline/candidate comparisons now use ephemeral Codex Threads, and the Runs page exposes the existing validated Run export as a direct download.
 - Upgraded the only shared protocol dependency to RunCase Interchange v0.1.1, which rejects traversing portable paths.
 - The 0.1.0 tag path now publishes only a Windows technical preview: its attested manifest records that authenticated Codex and clean-machine gates were not run, while the optional real gate remains required before any stable label; macOS is explicitly unsupported.

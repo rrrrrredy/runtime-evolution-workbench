@@ -48,6 +48,11 @@ try {
   try { Assert-RewSafeDataPath ([System.IO.Path]::GetPathRoot($testRoot)) | Out-Null } catch { $unsafeRejected = $true }
   if (-not $unsafeRejected) { throw "A drive root was accepted as product data." }
 
+  if (-not $IsWindows) {
+    Write-Host "Installation data-root safety passed; Windows shortcut ownership fixture skipped on $([System.Runtime.InteropServices.RuntimeInformation]::OSDescription)."
+    return
+  }
+
   $shell = New-Object -ComObject WScript.Shell
   $foreignShortcutPath = Join-Path $testRoot "foreign-shortcut.lnk"
   $foreignShortcut = $shell.CreateShortcut($foreignShortcutPath)
@@ -55,6 +60,8 @@ try {
   $foreignShortcut.WorkingDirectory = $testRoot
   $foreignShortcut.Description = "Foreign installation-safety fixture"
   $foreignShortcut.Save()
+  [Runtime.InteropServices.Marshal]::FinalReleaseComObject($foreignShortcut) | Out-Null
+  $foreignShortcut = $null
   $foreignHash = (Get-FileHash -LiteralPath $foreignShortcutPath -Algorithm SHA256).Hash
   $foreignShortcutRejected = $false
   try { Assert-RewStartupShortcutAvailable $foreignShortcutPath } catch { $foreignShortcutRejected = $true }
@@ -74,6 +81,10 @@ try {
   $ownedShortcut.WorkingDirectory = $script:RewRoot
   $ownedShortcut.Description = Get-RewStartupShortcutDescription
   $ownedShortcut.Save()
+  [Runtime.InteropServices.Marshal]::FinalReleaseComObject($ownedShortcut) | Out-Null
+  $ownedShortcut = $null
+  [Runtime.InteropServices.Marshal]::FinalReleaseComObject($shell) | Out-Null
+  $shell = $null
   Assert-RewStartupShortcutAvailable $ownedShortcutPath
   if (-not (Remove-RewOwnedStartupShortcut $ownedShortcutPath) -or (Test-Path -LiteralPath $ownedShortcutPath)) {
     throw "An owned shortcut was not removed."

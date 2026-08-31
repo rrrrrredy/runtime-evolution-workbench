@@ -71,6 +71,8 @@ function Get-RewStartupShortcutDescription {
 
 function Test-RewOwnedStartupShortcut([string]$ShortcutPath) {
   if (-not (Test-Path -LiteralPath $ShortcutPath -PathType Leaf)) { return $false }
+  $shell = $null
+  $shortcut = $null
   try {
     $shell = New-Object -ComObject WScript.Shell
     $shortcut = $shell.CreateShortcut($ShortcutPath)
@@ -87,6 +89,13 @@ function Test-RewOwnedStartupShortcut([string]$ShortcutPath) {
     )
   } catch {
     return $false
+  } finally {
+    if ($null -ne $shortcut -and [Runtime.InteropServices.Marshal]::IsComObject($shortcut)) {
+      [Runtime.InteropServices.Marshal]::FinalReleaseComObject($shortcut) | Out-Null
+    }
+    if ($null -ne $shell -and [Runtime.InteropServices.Marshal]::IsComObject($shell)) {
+      [Runtime.InteropServices.Marshal]::FinalReleaseComObject($shell) | Out-Null
+    }
   }
 }
 
