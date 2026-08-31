@@ -15,7 +15,7 @@ const dependencyName = "@runcase/interchange";
 const expectedUrl =
   "https://github.com/rrrrrredy/runcase-interchange/releases/download/v0.1.0/runcase-interchange-0.1.0.tgz";
 const expectedIntegrity =
-  "sha512-y3o4JTiNltlXBaU884B8urJQqtDJNAacL8o526dTep9Nlp2xeHJgOJS1+fQMXkBUqP9VQj1NroccGIpJFgWBbg==";
+  "sha512-RmdKYfHpH0fejZi3VmGXce2kmRvK278+305KzImWWjZt96Uyb1P52APmBujZXyj31t97TQlDDcXYX9iVkSm0Sg==";
 
 function assertEqual(actual, expected, label) {
   if (actual !== expected) {
