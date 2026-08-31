@@ -33,7 +33,7 @@ jobs:
           ref: 462fa2fa7cdaa8f58cd4c1dcc9cf778e1d2d0073
           path: protocol
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22.23.2'
           cache: npm
@@ -117,7 +117,7 @@ jobs:
           path: product
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22.23.2'
           cache: npm
@@ -147,7 +147,7 @@ jobs:
             platform: macos
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22.23.2'
       - name: Install pinned Codex CLI
