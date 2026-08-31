@@ -4,6 +4,7 @@ All notable changes are recorded here. The project follows semantic versioning a
 
 ## [Unreleased]
 
+- The 0.1.0 tag path now publishes only a Windows technical preview: its attested manifest records that authenticated Codex and clean-machine gates were not run, while the optional real gate remains required before any stable label; macOS is explicitly unsupported.
 - Tag publishing now fails immediately while the repository is private, matching GitHub's provenance-attestation boundary for individual accounts and the documented public-before-tag release order.
 - The exact RunCase Interchange SHA-512 lock now matches the anonymously downloaded and provenance-verified public `v0.1.0` prerelease asset.
 - GitHub tag releases now require curated, version-matched adoption notes and are labeled prereleases so the public release surface matches the product's technical-preview status.

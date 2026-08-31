@@ -10,7 +10,9 @@ It is not another trace dashboard. The product is useful when a Run is over:
 4. require objective verifier results and a human approval before publishing;
 5. refuse to overwrite a file that changed after the proposal was created.
 
-> **Release status:** 0.1 technical preview for Windows 11 and Codex. The core local closure is implemented and tested, but a clean-machine acceptance report is still required before this repository is labeled stable.
+> **Release status:** 0.1 technical preview for Windows 11 and Codex. CI covers the product, release archive, Windows installation lifecycle, and synthetic UI; this preview does not claim a real authenticated Codex run or clean-machine acceptance and must not be labeled stable.
+
+macOS is not supported by the 0.1 installer or lifecycle tools. The Node service, web UI, Hooks, MCP server, and Codex App Server boundary are largely portable, but running those pieces from source is not a supported Mac installation.
 
 ![Runtime Evolution Workbench Runs page with synthetic demo data](docs/images/ui-desktop-runs-synthetic.png)
 
@@ -34,7 +36,7 @@ Runtime Evolution Workbench never claims to read hidden reasoning.
 
 Approval is enabled only when the four objective verifier cells support the candidate: failure-baseline fails, failure-candidate passes, and both protection cells pass. The workbench never auto-publishes.
 
-The code-freeze release gate does not accept a chat reply as proof. It creates a disposable repository and requires six real Codex App Server Runs to reproduce an objective failure and protection case, produce the four-cell verifier matrix, publish the approved `AGENTS.md` candidate, preserve a later user edit as a rollback conflict, and finally restore the exact original. Clean-machine installation and human UI acceptance are still required before a stable label.
+The optional authenticated code-freeze gate does not accept a chat reply as proof. It creates a disposable repository and requires six real Codex App Server Runs to reproduce an objective failure and protection case, produce the four-cell verifier matrix, publish the approved `AGENTS.md` candidate, preserve a later user edit as a rollback conflict, and finally restore the exact original. Version 0.1.0 is published without that evidence and records the omission in its attested release manifest; the gate remains mandatory before any stable label.
 
 ## Quick start
 

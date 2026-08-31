@@ -84,9 +84,17 @@ try {
   $checksum = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
   [System.IO.File]::WriteAllText($checksumPath, "$checksum  runtime-evolution-workbench-$Version.zip`n")
   $manifest = [ordered]@{
-    schema_version = "runtime-evolution-workbench.release.v1"
+    schema_version = "runtime-evolution-workbench.release.v2"
     version = $Version
     commit = $commit
+    release_tier = "technical_preview"
+    supported_platforms = @("windows-11-x64")
+    unsupported_platforms = @("macos", "linux")
+    authenticated_product_gate = [ordered]@{
+      status = "not_run"
+      evidence_included = $false
+      claim = "This preview does not claim real authenticated Codex execution or clean-machine acceptance."
+    }
     protocol_dependency = [string]$package.dependencies.'@runcase/interchange'
     archive = [ordered]@{
       file = [System.IO.Path]::GetFileName($archivePath)
