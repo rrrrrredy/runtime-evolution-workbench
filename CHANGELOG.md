@@ -4,6 +4,7 @@ All notable changes are recorded here. The project follows semantic versioning a
 
 ## [Unreleased]
 
+- The release UI gate now checks out the exact RunCase Interchange `v0.1.1` commit used by the product dependency instead of mixing protocol releases in one evidence chain.
 - Capability publication and rollback now stage same-directory files, flush and verify their bytes, recheck the expected digest immediately before atomic replacement, preserve last-moment user edits, and reconcile an interrupted commit on the next action.
 - The installer refuses a foreign same-name Startup shortcut; inspection reports the collision, uninstall removes only a marked shortcut, COM readers are released before removal, and non-Windows checks skip only this Windows-specific fixture.
 - Managed baseline/candidate comparisons now use ephemeral Codex Threads, and the Runs page exposes the existing validated Run export as a direct download.
