@@ -19,10 +19,17 @@ $codexCommand = Get-Command codex.exe -ErrorAction SilentlyContinue
 if ($null -eq $codexCommand) { $codexCommand = Get-Command codex -ErrorAction SilentlyContinue }
 if ($null -eq $codexCommand) { throw "Codex CLI is required and was not found on PATH." }
 
-$source = if ([string]::IsNullOrWhiteSpace($MarketplaceSource)) { $script:RewRoot } else { $MarketplaceSource }
+$sourceCandidate = if ([string]::IsNullOrWhiteSpace($MarketplaceSource)) { $script:RewRoot } else { $MarketplaceSource }
+$source = [System.IO.Path]::GetFullPath($sourceCandidate).TrimEnd('\')
 $resolvedDataDir = Get-RewDataDir $DataDir
 $marketplaceName = "runtime-evolution-workbench"
 $pluginSelector = "runtime-evolution-workbench@runtime-evolution-workbench"
+$expectedPluginPath = [System.IO.Path]::GetFullPath(
+  (Join-Path $source "plugins\runtime-evolution-workbench")
+).TrimEnd('\')
+$pluginManifest = Get-Content -LiteralPath (Join-Path $expectedPluginPath ".codex-plugin\plugin.json") -Raw |
+  ConvertFrom-Json
+$expectedPluginVersion = [string]$pluginManifest.version
 $marketplaceAdded = $false
 $pluginAdded = $false
 $shortcutCreated = $false
@@ -51,9 +58,12 @@ try {
   $existingHealth = Get-RewHealth $Port
   $serviceWasRunning = $null -ne $existingHealth -and $existingHealth.product -eq "runtime-evolution-workbench"
   $marketplaceOutput = (& $codexCommand.Source plugin marketplace list 2>&1 | Out-String)
-  $marketplacePresent = Test-RewMarketplacePresent $marketplaceOutput $marketplaceName
+  $marketplaceRecord = Get-RewMarketplaceRecord $marketplaceOutput $marketplaceName
   $pluginOutput = (& $codexCommand.Source plugin list 2>&1 | Out-String)
-  $pluginPresent = Test-RewPluginInstalled $pluginOutput $pluginSelector
+  $pluginRecord = Get-RewPluginRecord $pluginOutput $pluginSelector
+  Assert-RewCodexOwnership $marketplaceRecord $pluginRecord $source $expectedPluginPath $expectedPluginVersion
+  $marketplacePresent = $null -ne $marketplaceRecord
+  $pluginPresent = $null -ne $pluginRecord
 
   if ($Repair -and $pluginPresent) {
     & $codexCommand.Source plugin remove $pluginSelector
@@ -78,6 +88,16 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Codex plugin installation failed." }
     $pluginAdded = $true
   }
+  $retainedMarketplace = Get-RewMarketplaceRecord (
+    (& $codexCommand.Source plugin marketplace list 2>&1 | Out-String)
+  ) $marketplaceName
+  $retainedPlugin = Get-RewPluginRecord (
+    (& $codexCommand.Source plugin list 2>&1 | Out-String)
+  ) $pluginSelector
+  Assert-RewCodexOwnership $retainedMarketplace $retainedPlugin $source $expectedPluginPath $expectedPluginVersion
+  if ($null -eq $retainedMarketplace -or $null -eq $retainedPlugin) {
+    throw "Codex did not retain the exact Runtime Evolution Workbench marketplace and plugin registration."
+  }
 
   if ($EnableStartup) {
     $shortcutCreated = -not $shortcutWasPresent
@@ -101,6 +121,7 @@ try {
   if (-not $NoStart) {
     & (Join-Path $PSScriptRoot "Start.ps1") -Open:$Open -Port $Port -DataDir $resolvedDataDir
   }
+  Write-RewInstallationReceipt $resolvedDataDir $source $expectedPluginPath $expectedPluginVersion
 
   Write-Host "Runtime Evolution Workbench plugin is installed. Restart Codex to load Hooks, MCP tools, and the Skill."
   Write-Host "Uninstall with .\scripts\Uninstall.ps1; Run data is preserved unless -DeleteData is explicitly supplied."

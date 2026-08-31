@@ -1,6 +1,12 @@
 . (Join-Path $PSScriptRoot "Common.ps1")
 
-$testRoot = Join-Path $script:RewRoot ".runtime-data\installation-safety-$([Guid]::NewGuid().ToString('N'))"
+$testBase = if (-not [string]::IsNullOrWhiteSpace($env:REW_TEST_TMP_ROOT)) {
+  [System.IO.Path]::GetFullPath($env:REW_TEST_TMP_ROOT)
+} else {
+  [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath())
+}
+$testPrefix = Join-Path $testBase "rew-installation-safety-"
+$testRoot = "$testPrefix$([Guid]::NewGuid().ToString('N'))"
 New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
 try {
   $owned = Join-Path $testRoot "owned"
@@ -48,6 +54,10 @@ try {
   try { Assert-RewSafeDataPath ([System.IO.Path]::GetPathRoot($testRoot)) | Out-Null } catch { $unsafeRejected = $true }
   if (-not $unsafeRejected) { throw "A drive root was accepted as product data." }
 
+  $overlapRejected = $false
+  try { Assert-RewSafeDataPath (Join-Path $script:RewRoot ".runtime-data\forbidden") | Out-Null } catch { $overlapRejected = $true }
+  if (-not $overlapRejected) { throw "A data path inside the source checkout was accepted." }
+
   if (-not $IsWindows) {
     Write-Host "Installation data-root safety passed; Windows shortcut ownership fixture skipped on $([System.Runtime.InteropServices.RuntimeInformation]::OSDescription)."
     return
@@ -93,8 +103,7 @@ try {
   Write-Host "Installation data-root and shortcut ownership safety passed."
 } finally {
   $resolvedTestRoot = (Resolve-Path -LiteralPath $testRoot).Path
-  $expectedPrefix = Join-Path $script:RewRoot ".runtime-data\installation-safety-"
-  if (-not $resolvedTestRoot.StartsWith($expectedPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+  if (-not $resolvedTestRoot.StartsWith($testPrefix, [StringComparison]::OrdinalIgnoreCase)) {
     throw "Unsafe installation-safety cleanup target: $resolvedTestRoot"
   }
   Remove-Item -LiteralPath $resolvedTestRoot -Recurse -Force

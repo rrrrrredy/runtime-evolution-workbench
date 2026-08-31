@@ -98,7 +98,12 @@ export async function createWorkbenchApp(deps: AppDependencies): Promise<Fastify
   const app = Fastify({ logger: false, bodyLimit: 2 * 1024 * 1024 });
   await app.register(cookie);
 
-  app.get("/health", async () => ({ ok: true, product: "runtime-evolution-workbench", version: "0.2.0" }));
+  app.get("/health", async () => ({
+    ok: true,
+    product: "runtime-evolution-workbench",
+    version: "0.2.0",
+    instance_id: process.env.REW_PROCESS_TOKEN ?? null
+  }));
 
   app.get<{ Params: { token: string } }>("/session/:token", async (request, reply) => {
     if (!tokenMatches(deps.sessionToken, request.params.token)) return reply.code(404).send({ error: "not_found" });

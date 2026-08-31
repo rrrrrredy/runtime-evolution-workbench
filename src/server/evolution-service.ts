@@ -191,9 +191,11 @@ export class EvolutionService {
       throw new Error("The retained candidate backup no longer matches the approved digest");
     }
     let adoption: FileAdoptionResult;
+    const operationId = `${proposal.id}:publish`;
     try {
       adoption = this.replaceFile({
-        operationId: `${proposal.id}:publish`,
+        operationId,
+        operationSecret: this.store.getOrCreateFileAdoptionSecret(operationId),
         action: "publish",
         workspaceRoot: target.root,
         targetPath: target.fullPath,
@@ -257,9 +259,11 @@ export class EvolutionService {
       throw new Error("The retained original backup no longer matches the proposal digest");
     }
     let adoption: FileAdoptionResult;
+    const operationId = `${proposal.id}:rollback`;
     try {
       adoption = this.replaceFile({
-        operationId: `${proposal.id}:rollback`,
+        operationId,
+        operationSecret: this.store.getOrCreateFileAdoptionSecret(operationId),
         action: "rollback",
         workspaceRoot: target.root,
         targetPath: target.fullPath,

@@ -10,11 +10,7 @@ $resolvedDataDir = Get-RewDataDir $DataDir
 $pluginSelector = "runtime-evolution-workbench@runtime-evolution-workbench"
 $marketplaceName = "runtime-evolution-workbench"
 
-try {
-  & (Join-Path $PSScriptRoot "Stop.ps1") -Port $Port -DataDir $resolvedDataDir
-} catch {
-  Write-Warning "Service stop needs attention: $($_.Exception.Message)"
-}
+& (Join-Path $PSScriptRoot "Stop.ps1") -Port $Port -DataDir $resolvedDataDir
 
 $startupDirectory = [Environment]::GetFolderPath("Startup")
 if (-not [string]::IsNullOrWhiteSpace($startupDirectory)) {
@@ -29,13 +25,22 @@ if (-not [string]::IsNullOrWhiteSpace($startupDirectory)) {
 $codexCommand = Get-Command codex.exe -ErrorAction SilentlyContinue
 if ($null -eq $codexCommand) { $codexCommand = Get-Command codex -ErrorAction SilentlyContinue }
 if ($null -ne $codexCommand) {
+  $receipt = Read-RewInstallationReceipt $resolvedDataDir
   $pluginOutput = (& $codexCommand.Source plugin list 2>&1 | Out-String)
-  if (Test-RewPluginInstalled $pluginOutput $pluginSelector) {
+  $pluginRecord = Get-RewPluginRecord $pluginOutput $pluginSelector
+  $marketplaceOutput = (& $codexCommand.Source plugin marketplace list 2>&1 | Out-String)
+  $marketplaceRecord = Get-RewMarketplaceRecord $marketplaceOutput $marketplaceName
+  if (($null -ne $pluginRecord -or $null -ne $marketplaceRecord) -and $null -eq $receipt) {
+    throw "Codex registrations exist, but this data root has no ownership receipt. They were preserved."
+  }
+  if ($null -ne $receipt) {
+    Assert-RewCodexOwnership $marketplaceRecord $pluginRecord ([string]$receipt.marketplace_source) ([string]$receipt.plugin_path) ([string]$receipt.plugin_version)
+  }
+  if ($null -ne $pluginRecord) {
     & $codexCommand.Source plugin remove $pluginSelector
     if ($LASTEXITCODE -ne 0) { throw "Codex could not remove $pluginSelector." }
   }
-  $marketplaceOutput = (& $codexCommand.Source plugin marketplace list 2>&1 | Out-String)
-  if (Test-RewMarketplacePresent $marketplaceOutput $marketplaceName) {
+  if ($null -ne $marketplaceRecord) {
     & $codexCommand.Source plugin marketplace remove $marketplaceName
     if ($LASTEXITCODE -ne 0) { throw "Codex could not remove marketplace $marketplaceName." }
   }

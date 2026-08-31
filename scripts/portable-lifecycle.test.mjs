@@ -1,16 +1,19 @@
 import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import test from "node:test";
 
 import {
   assertDataRoot,
   assertSafeDataPath,
+  commandOwnsServer,
   initializeDataRoot,
   marketplaceListingContains,
+  marketplaceListingRecord,
   parseArguments,
   pluginListingContains,
+  pluginListingRecord,
   removeOwnedDataRoot
 } from "./portable-lifecycle.mjs";
 
@@ -32,6 +35,29 @@ test("Codex aligned plugin and marketplace tables are parsed exactly", () => {
     marketplaceListingContains("MARKETPLACE ROOT\nruntime-evolution-workbench  /tmp/source", "runtime-evolution-workbench"),
     true
   );
+  assert.deepEqual(
+    pluginListingRecord(
+      "runtime-evolution-workbench@runtime-evolution-workbench    installed, enabled  0.2.0  /tmp/plugin",
+      "runtime-evolution-workbench@runtime-evolution-workbench"
+    ),
+    {
+      selector: "runtime-evolution-workbench@runtime-evolution-workbench",
+      version: "0.2.0",
+      path: resolve("/tmp/plugin")
+    }
+  );
+  assert.deepEqual(
+    marketplaceListingRecord("runtime-evolution-workbench  /tmp/foreign-source", "runtime-evolution-workbench"),
+    { name: "runtime-evolution-workbench", root: resolve("/tmp/foreign-source") }
+  );
+});
+
+test("portable service ownership requires both the server path and per-process secret", () => {
+  const marker = "/opt/runtime-evolution-workbench/dist/server/index.js";
+  const token = "a".repeat(64);
+  assert.equal(commandOwnsServer(`node ${marker}`, marker, `REW_PROCESS_TOKEN=${token}`, token), true);
+  assert.equal(commandOwnsServer("node /tmp/foreign.js", marker, `REW_PROCESS_TOKEN=${token}`, token), false);
+  assert.equal(commandOwnsServer(`node ${marker}`, marker, "REW_PROCESS_TOKEN=foreign", token), false);
 });
 
 test("portable data deletion requires the exact product marker", () => {

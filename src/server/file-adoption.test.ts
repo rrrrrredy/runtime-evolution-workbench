@@ -3,6 +3,7 @@ import {
   existsSync,
   fsyncSync,
   ftruncateSync,
+  linkSync,
   mkdirSync,
   mkdtempSync,
   openSync,
@@ -10,6 +11,7 @@ import {
   readdirSync,
   renameSync,
   rmSync,
+  unlinkSync,
   writeFileSync,
   writeSync
 } from "node:fs";
@@ -45,6 +47,7 @@ function fixture(suffix: string): { root: string; workspace: string; target: str
     desired,
     input: {
       operationId: `proposal-${suffix}:publish`,
+      operationSecret: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
       action: "publish",
       workspaceRoot: workspace,
       targetPath: target,
@@ -140,6 +143,55 @@ describe("non-overwriting file adoption", () => {
       for (const directory of recoveryDirectories(value.workspace)) {
         expect(readdirSync(directory).some((name) => name.endsWith(".original"))).toBe(false);
       }
+    } finally {
+      rmSync(value.root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+    }
+  });
+
+  it("rejects a workspace-forged recovery journal without moving the target", () => {
+    const value = fixture("forged-journal");
+    try {
+      expect(() =>
+        adoptFileWithoutOverwrite(value.input, {
+          afterPrepared: () => {
+            throw new Error("synthetic interruption");
+          }
+        })
+      ).toThrow(FileAdoptionError);
+      const directory = recoveryDirectories(value.workspace)[0]!;
+      const journalName = readdirSync(directory).find((name) => name.endsWith("-prepared.json"))!;
+      const journalPath = join(directory, journalName);
+      const journal = JSON.parse(readFileSync(journalPath, "utf8")) as Record<string, unknown>;
+      journal.auth_tag = "0".repeat(64);
+      writeFileSync(journalPath, `${JSON.stringify(journal, null, 2)}\n`, "utf8");
+
+      expect(() => adoptFileWithoutOverwrite(value.input)).toThrow("authentication failed");
+      expect(readFileSync(value.target, "utf8")).toBe(value.original);
+    } finally {
+      rmSync(value.root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+    }
+  });
+
+  it("rejects a hard-linked staged-file substitution from outside the recovery directory", () => {
+    const value = fixture("staged-hardlink");
+    const outside = join(value.root, "outside.txt");
+    writeFileSync(outside, value.desired, "utf8");
+    try {
+      expect(() =>
+        adoptFileWithoutOverwrite(value.input, {
+          afterPrepared: () => {
+            throw new Error("synthetic interruption");
+          }
+        })
+      ).toThrow(FileAdoptionError);
+      const directory = recoveryDirectories(value.workspace)[0]!;
+      const staged = join(directory, "AGENTS.md.staged");
+      unlinkSync(staged);
+      linkSync(outside, staged);
+
+      expect(() => adoptFileWithoutOverwrite(value.input)).toThrow(/identity|hard-link count/);
+      expect(readFileSync(value.target, "utf8")).toBe(value.original);
+      expect(readFileSync(outside, "utf8")).toBe(value.desired);
     } finally {
       rmSync(value.root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
     }

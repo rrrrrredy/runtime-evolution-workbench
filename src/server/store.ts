@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 
 import { newId, stableUuid } from "../shared/ids.js";
@@ -417,11 +418,35 @@ export class WorkbenchStore {
         imported_at TEXT NOT NULL
       );
       CREATE INDEX IF NOT EXISTS protocol_documents_imported_idx ON protocol_documents(imported_at DESC);
+
+      CREATE TABLE IF NOT EXISTS file_adoption_secrets (
+        operation_id TEXT PRIMARY KEY,
+        secret TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
     `);
   }
 
   close(): void {
     this.#db.close();
+  }
+
+  getOrCreateFileAdoptionSecret(operationId: string): string {
+    const existing = this.#db.prepare(
+      "SELECT secret FROM file_adoption_secrets WHERE operation_id = ?"
+    ).get(operationId) as Row | undefined;
+    if (existing !== undefined) return asString(existing.secret);
+    const secret = randomBytes(32).toString("hex");
+    this.#db.prepare(
+      "INSERT OR IGNORE INTO file_adoption_secrets (operation_id, secret, created_at) VALUES (?, ?, ?)"
+    ).run(operationId, secret, new Date().toISOString());
+    const retained = this.#db.prepare(
+      "SELECT secret FROM file_adoption_secrets WHERE operation_id = ?"
+    ).get(operationId) as Row | undefined;
+    if (retained === undefined || asString(retained.secret).length < 32) {
+      throw new Error("Trusted file-adoption secret could not be retained");
+    }
+    return asString(retained.secret);
   }
 
   recoverInterruptedState(now = new Date().toISOString()): {

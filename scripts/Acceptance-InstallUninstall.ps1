@@ -147,6 +147,12 @@ createServer((_request, response) => {
   Assert-Acceptance $ownsStartupShortcut "installer did not create the requested Startup shortcut"
   $health = Get-RewHealth $Port
   Assert-Acceptance ($null -ne $health -and $health.product -eq "runtime-evolution-workbench") "installed service is not healthy"
+  & (Join-Path $PSScriptRoot "Start.ps1") -Port $Port -DataDir $acceptanceData | Out-Null
+  $sameHealth = Get-RewHealth $Port
+  Assert-Acceptance (
+    $null -ne $sameHealth -and
+    [string]$sameHealth.instance_id -ceq [string]$health.instance_id
+  ) "repeat start did not recognize the owned service instance"
   $listeners = @(Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction Stop)
   Assert-Acceptance ($listeners.Count -gt 0) "service has no listening socket"
   Assert-Acceptance (@($listeners | Where-Object { $_.LocalAddress -notin @("127.0.0.1", "::1") }).Count -eq 0) "service is listening beyond loopback"

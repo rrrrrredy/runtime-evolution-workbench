@@ -16,23 +16,48 @@ if (-not (Test-Path -LiteralPath $pidPath -PathType Leaf)) {
   return
 }
 
-$rawProcessId = (Get-Content -LiteralPath $pidPath -Raw).Trim()
-$serviceProcessId = 0
-if (-not [int]::TryParse($rawProcessId, [ref]$serviceProcessId) -or $serviceProcessId -le 0) {
+try { $serviceRecord = Get-Content -LiteralPath $pidPath -Raw | ConvertFrom-Json }
+catch { throw "Invalid service ownership record: $pidPath" }
+if (
+  $serviceRecord.schema_version -ne "product.windows-service.v2" -or
+  $serviceRecord.product -ne "runtime-evolution-workbench" -or
+  [string]$serviceRecord.process_token -notmatch '^[a-f0-9]{64}$'
+) {
   throw "Invalid service PID file: $pidPath"
+}
+$serviceProcessId = [int]$serviceRecord.pid
+if ($serviceProcessId -le 0 -or [int]$serviceRecord.port -ne $Port) {
+  throw "Service ownership record does not match the requested port: $pidPath"
 }
 
 $serviceProcessInfo = Get-CimInstance Win32_Process -Filter "ProcessId = $serviceProcessId" -ErrorAction SilentlyContinue
 if ($null -eq $serviceProcessInfo) {
+  $health = Get-RewHealth $Port
+  if ($null -ne $health) {
+    throw "The recorded process is gone but port $Port is serving an application. Refusing to remove ownership evidence."
+  }
   Remove-Item -LiteralPath $pidPath -Force
   Write-Host "Removed a stale PID file; the service was not running."
   return
 }
 
 $expectedServer = [System.IO.Path]::GetFullPath((Join-Path $script:RewRoot "dist\server\index.js"))
+$recordedServer = [System.IO.Path]::GetFullPath([string]$serviceRecord.server_path)
 $commandLine = [string]$serviceProcessInfo.CommandLine
-if ($serviceProcessInfo.Name -notmatch '^node(?:\.exe)?$' -or $commandLine.IndexOf($expectedServer, [StringComparison]::OrdinalIgnoreCase) -lt 0) {
+if (
+  -not $recordedServer.Equals($expectedServer, [StringComparison]::OrdinalIgnoreCase) -or
+  $serviceProcessInfo.Name -notmatch '^node(?:\.exe)?$' -or
+  $commandLine.IndexOf($expectedServer, [StringComparison]::OrdinalIgnoreCase) -lt 0
+) {
   throw "PID $serviceProcessId does not belong to this Runtime Evolution Workbench checkout. Refusing to stop it."
+}
+$health = Get-RewHealth $Port
+if (
+  $null -eq $health -or
+  $health.product -ne "runtime-evolution-workbench" -or
+  [string]$health.instance_id -cne [string]$serviceRecord.process_token
+) {
+  throw "The service did not prove its per-process identity. Refusing to stop PID $serviceProcessId."
 }
 
 Stop-Process -Id $serviceProcessId
