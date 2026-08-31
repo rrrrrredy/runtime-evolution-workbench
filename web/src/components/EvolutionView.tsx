@@ -209,6 +209,7 @@ export function EvolutionView({ proposals, comparisons, issues, runs, onDataChan
             </div>
 
             <div className="lab-content">
+              <div className="boundary-note"><ShieldCheck size={18} /><p>Publish and rollback keep the old file in a named recovery directory and install only when the target path is empty. Close editors and reconcile that recovery file before deleting it.</p></div>
               <section className="diff-section">
                 <header><div><div className="eyebrow">Reviewable change</div><h2>Candidate diff</h2></div><span>{detail.proposal.targetKind === "agents" ? "AGENTS.md" : "SKILL.md"}</span></header>
                 <pre className="diff-view">{detail.proposal.diffText}</pre>

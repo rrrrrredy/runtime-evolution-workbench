@@ -10,7 +10,7 @@ Workbench ──> App Server adapter ──> stored-thread backfill
                                 └──> managed comparison turns
 
 Evolution Lab ──> isolated Git worktrees ──> objective verifier
-              └──> hash-safe publish / three-way rollback
+              └──> journaled no-clobber publish / three-way rollback
 ```
 
 The plugin is a distribution and capture edge. The local service is the product.
@@ -22,7 +22,7 @@ The plugin is a distribution and capture edge. The local service is the product.
 - Reasoning items are not persisted; an omission marker preserves the observation boundary.
 - User-selected excluded paths are never read into the content store.
 - Managed runs use isolated worktrees, fixed inputs, and an explicit sandbox.
-- Publishing and rollback compare SHA-256 hashes before writing.
+- Publishing and rollback use a durable transition journal, a unique same-volume recovery directory, and hard-link create-if-absent adoption. They never use a replacing rename for the user target.
 
 ## Codex 0.150.0-alpha.8 findings
 

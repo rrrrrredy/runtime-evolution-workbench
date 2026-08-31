@@ -1,23 +1,18 @@
-import { randomUUID } from "node:crypto";
-import {
-  closeSync,
-  existsSync,
-  fsyncSync,
-  openSync,
-  readFileSync,
-  realpathSync,
-  renameSync,
-  statSync,
-  unlinkSync,
-  writeFileSync
-} from "node:fs";
-import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
+import { basename, dirname, isAbsolute, relative, resolve, sep } from "node:path";
 
 import { createTwoFilesPatch } from "diff";
 
 import { sha256 } from "../shared/ids.js";
 import type { CapabilityProposal, CapabilityTargetKind, PublishEvent } from "../shared/types.js";
 import { ContentStore } from "./content-store.js";
+import {
+  adoptFileWithoutOverwrite,
+  ConcurrentTargetChangeError,
+  FileAdoptionError,
+  type FileAdoptionInput,
+  type FileAdoptionResult
+} from "./file-adoption.js";
 import { redactUnknown } from "./redaction.js";
 import { WorkbenchStore } from "./store.js";
 
@@ -39,56 +34,12 @@ export interface ProposalDetail {
   candidateContent: string;
 }
 
-export interface AtomicReplaceInput {
-  targetPath: string;
-  expectedDigest: string;
-  desiredContent: string;
-  desiredDigest: string;
-}
+export type AtomicReplaceInput = FileAdoptionInput;
+export type AtomicFileReplacer = (input: AtomicReplaceInput) => FileAdoptionResult;
+export const replaceFileWithoutOverwrite = adoptFileWithoutOverwrite;
+export { ConcurrentTargetChangeError, FileAdoptionError };
 
-export type AtomicFileReplacer = (input: AtomicReplaceInput) => string;
-
-export class ConcurrentTargetChangeError extends Error {
-  constructor(readonly currentDigest: string) {
-    super("The target changed immediately before atomic replacement");
-    this.name = "ConcurrentTargetChangeError";
-  }
-}
-
-export function replaceFileAtomically(input: AtomicReplaceInput): string {
-  const temporaryPath = join(
-    dirname(input.targetPath),
-    `.${basename(input.targetPath)}.runtime-evolution-${randomUUID()}.tmp`
-  );
-  let descriptor: number | null = null;
-  try {
-    const mode = statSync(input.targetPath).mode & 0o777;
-    descriptor = openSync(temporaryPath, "wx", mode);
-    writeFileSync(descriptor, input.desiredContent, { encoding: "utf8" });
-    fsyncSync(descriptor);
-    closeSync(descriptor);
-    descriptor = null;
-
-    const stagedDigest = sha256(readFileSync(temporaryPath));
-    if (stagedDigest !== input.desiredDigest) {
-      throw new Error("The staged capability file did not match the approved digest");
-    }
-    const commitDigest = sha256(readFileSync(input.targetPath));
-    if (commitDigest !== input.expectedDigest) throw new ConcurrentTargetChangeError(commitDigest);
-
-    renameSync(temporaryPath, input.targetPath);
-    const resultingDigest = sha256(readFileSync(input.targetPath));
-    if (resultingDigest !== input.desiredDigest) {
-      throw new Error("The atomically replaced capability file did not match the approved digest");
-    }
-    return resultingDigest;
-  } finally {
-    if (descriptor !== null) closeSync(descriptor);
-    if (existsSync(temporaryPath)) unlinkSync(temporaryPath);
-  }
-}
-
-function safeTarget(workspaceRoot: string, targetPath: string, kind: CapabilityTargetKind): { root: string; fullPath: string; relativePath: string } {
+function safeTarget(workspaceRoot: string, targetPath: string, kind: CapabilityTargetKind, allowMissing = false): { root: string; fullPath: string; relativePath: string } {
   if (isAbsolute(targetPath)) throw new Error("targetPath must be relative to workspaceRoot");
   const normalizedRelative = targetPath.replaceAll("\\", "/");
   if (normalizedRelative.split("/").some((part) => part === ".." || part.length === 0)) {
@@ -100,18 +51,53 @@ function safeTarget(workspaceRoot: string, targetPath: string, kind: CapabilityT
   }
   const root = realpathSync(workspaceRoot);
   const requested = resolve(root, normalizedRelative);
-  const fullPath = realpathSync(requested);
   const prefix = root.endsWith(sep) ? root : `${root}${sep}`;
+  if (requested !== root && !requested.startsWith(prefix)) throw new Error("Target resolves outside workspaceRoot");
+  let fullPath: string;
+  if (existsSync(requested)) {
+    fullPath = realpathSync(requested);
+  } else {
+    if (!allowMissing) throw new Error("Target capability file does not exist");
+    const parent = realpathSync(dirname(requested));
+    if (parent !== root && !parent.startsWith(prefix)) throw new Error("Target parent resolves outside workspaceRoot");
+    fullPath = requested;
+  }
   if (fullPath !== root && !fullPath.startsWith(prefix)) throw new Error("Target resolves outside workspaceRoot");
   const relativePath = relative(root, fullPath).replaceAll("\\", "/");
   return { root, fullPath, relativePath };
+}
+
+function failureEvidence(error: unknown, targetPath: string, contentStore: ContentStore): {
+  currentDigest: string;
+  currentContentRef: string | null;
+  recoveryPath: string | null;
+} {
+  const recoveryPath = error instanceof FileAdoptionError ? error.recoveryPath : null;
+  const evidencePath = error instanceof FileAdoptionError
+    ? error.evidencePath
+    : existsSync(targetPath) ? targetPath : null;
+  if (evidencePath !== null && existsSync(evidencePath)) {
+    const content = readFileSync(evidencePath);
+    return { currentDigest: sha256(content), currentContentRef: contentStore.put(content).ref, recoveryPath };
+  }
+  return {
+    currentDigest: error instanceof FileAdoptionError ? error.currentDigest : "missing",
+    currentContentRef: null,
+    recoveryPath
+  };
+}
+
+function recoveryMessage(path: string | null): string {
+  return path === null
+    ? ""
+    : ` Recovery file retained at ${path}; close any editor using the old file, then compare it with the current target before deleting it.`;
 }
 
 export class EvolutionService {
   constructor(
     readonly store: WorkbenchStore,
     readonly contentStore: ContentStore,
-    readonly replaceFile: AtomicFileReplacer = replaceFileAtomically
+    readonly replaceFile: AtomicFileReplacer = replaceFileWithoutOverwrite
   ) {}
 
   createProposal(input: CreateProposalInput): CapabilityProposal {
@@ -199,53 +185,24 @@ export class EvolutionService {
   publish(id: string): PublishEvent {
     const proposal = this.#requireProposal(id);
     if (proposal.status !== "approved") throw new Error("Proposal requires explicit approval before publishing");
-    const target = safeTarget(proposal.workspaceRoot, proposal.targetPath, proposal.targetKind);
-    const currentContent = readFileSync(target.fullPath, "utf8");
-    const currentDigest = sha256(currentContent);
-    if (currentDigest === proposal.candidateDigest) {
-      const publishedAt = new Date().toISOString();
-      this.store.updateProposalStatus(proposal.id, "published", publishedAt);
-      return this.store.addPublishEvent({
-        proposalId: proposal.id,
-        action: "publish",
-        status: "applied",
-        targetPath: target.fullPath,
-        expectedDigest: proposal.candidateDigest,
-        currentDigest,
-        resultingDigest: currentDigest,
-        currentContentRef: null,
-        message: "The approved candidate was already present; publication metadata was reconciled after an interrupted atomic commit."
-      });
-    }
-    if (currentDigest !== proposal.originalDigest) {
-      const currentRef = this.contentStore.put(currentContent).ref;
-      return this.store.addPublishEvent({
-        proposalId: proposal.id,
-        action: "publish",
-        status: "conflict",
-        targetPath: target.fullPath,
-        expectedDigest: proposal.originalDigest,
-        currentDigest,
-        resultingDigest: null,
-        currentContentRef: currentRef,
-        message: "The target changed after the proposal was created. No file was overwritten; review the three versions."
-      });
-    }
+    const target = safeTarget(proposal.workspaceRoot, proposal.targetPath, proposal.targetKind, true);
     const candidateContent = this.contentStore.read(proposal.candidateContentRef).toString("utf8");
     if (sha256(candidateContent) !== proposal.candidateDigest) {
       throw new Error("The retained candidate backup no longer matches the approved digest");
     }
-    let resultingDigest: string;
+    let adoption: FileAdoptionResult;
     try {
-      resultingDigest = this.replaceFile({
+      adoption = this.replaceFile({
+        operationId: `${proposal.id}:publish`,
+        action: "publish",
+        workspaceRoot: target.root,
         targetPath: target.fullPath,
         expectedDigest: proposal.originalDigest,
         desiredContent: candidateContent,
         desiredDigest: proposal.candidateDigest
       });
     } catch (error) {
-      const afterContent = readFileSync(target.fullPath, "utf8");
-      const afterDigest = sha256(afterContent);
+      const evidence = failureEvidence(error, target.fullPath, this.contentStore);
       if (error instanceof ConcurrentTargetChangeError) {
         return this.store.addPublishEvent({
           proposalId: proposal.id,
@@ -253,10 +210,10 @@ export class EvolutionService {
           status: "conflict",
           targetPath: target.fullPath,
           expectedDigest: proposal.originalDigest,
-          currentDigest: afterDigest,
+          currentDigest: evidence.currentDigest,
           resultingDigest: null,
-          currentContentRef: this.contentStore.put(afterContent).ref,
-          message: "The target changed immediately before atomic replacement. No user edit was overwritten."
+          currentContentRef: evidence.currentContentRef,
+          message: `${error.message}. No file was overwritten.${recoveryMessage(evidence.recoveryPath)}`
         });
       }
       const event = this.store.addPublishEvent({
@@ -265,10 +222,10 @@ export class EvolutionService {
         status: "failed",
         targetPath: target.fullPath,
         expectedDigest: proposal.originalDigest,
-        currentDigest,
-        resultingDigest: afterDigest,
-        currentContentRef: this.contentStore.put(afterContent).ref,
-        message: `Atomic publication failed; retained recovery refs remain available. ${error instanceof Error ? error.message : String(error)}`
+        currentDigest: evidence.currentDigest,
+        resultingDigest: existsSync(target.fullPath) ? sha256(readFileSync(target.fullPath)) : null,
+        currentContentRef: evidence.currentContentRef,
+        message: `Non-overwriting publication failed. ${error instanceof Error ? error.message : String(error)}${recoveryMessage(evidence.recoveryPath)}`
       });
       throw new Error(event.message);
     }
@@ -280,10 +237,12 @@ export class EvolutionService {
       status: "applied",
       targetPath: target.fullPath,
       expectedDigest: proposal.originalDigest,
-      currentDigest,
-      resultingDigest,
+      currentDigest: adoption.previousDigest,
+      resultingDigest: adoption.resultingDigest,
       currentContentRef: null,
-      message: "Approved candidate published after the original file hash matched."
+      message: adoption.recoveryPath === null
+        ? "The approved candidate was already present; publication metadata was reconciled without changing the file."
+        : `Approved candidate adopted without overwriting an existing target.${recoveryMessage(adoption.recoveryPath)}`
     });
   }
 
@@ -292,53 +251,24 @@ export class EvolutionService {
     if (proposal.status !== "published" && proposal.status !== "rollback_conflict") {
       throw new Error(`Proposal cannot be rolled back from status ${proposal.status}`);
     }
-    const target = safeTarget(proposal.workspaceRoot, proposal.targetPath, proposal.targetKind);
-    const currentContent = readFileSync(target.fullPath, "utf8");
-    const currentDigest = sha256(currentContent);
-    if (currentDigest === proposal.originalDigest) {
-      this.store.updateProposalStatus(proposal.id, "rolled_back");
-      return this.store.addPublishEvent({
-        proposalId: proposal.id,
-        action: "rollback",
-        status: "applied",
-        targetPath: target.fullPath,
-        expectedDigest: proposal.originalDigest,
-        currentDigest,
-        resultingDigest: currentDigest,
-        currentContentRef: null,
-        message: "The original was already present; rollback metadata was reconciled after an interrupted atomic commit."
-      });
-    }
-    if (currentDigest !== proposal.candidateDigest) {
-      const currentRef = this.contentStore.put(currentContent).ref;
-      this.store.updateProposalStatus(proposal.id, "rollback_conflict");
-      return this.store.addPublishEvent({
-        proposalId: proposal.id,
-        action: "rollback",
-        status: "conflict",
-        targetPath: target.fullPath,
-        expectedDigest: proposal.candidateDigest,
-        currentDigest,
-        resultingDigest: null,
-        currentContentRef: currentRef,
-        message: "The published file has later user edits. Nothing was overwritten; use the original, candidate, and current refs for three-way review."
-      });
-    }
+    const target = safeTarget(proposal.workspaceRoot, proposal.targetPath, proposal.targetKind, true);
     const originalContent = this.contentStore.read(proposal.originalContentRef).toString("utf8");
     if (sha256(originalContent) !== proposal.originalDigest) {
       throw new Error("The retained original backup no longer matches the proposal digest");
     }
-    let resultingDigest: string;
+    let adoption: FileAdoptionResult;
     try {
-      resultingDigest = this.replaceFile({
+      adoption = this.replaceFile({
+        operationId: `${proposal.id}:rollback`,
+        action: "rollback",
+        workspaceRoot: target.root,
         targetPath: target.fullPath,
         expectedDigest: proposal.candidateDigest,
         desiredContent: originalContent,
         desiredDigest: proposal.originalDigest
       });
     } catch (error) {
-      const afterContent = readFileSync(target.fullPath, "utf8");
-      const afterDigest = sha256(afterContent);
+      const evidence = failureEvidence(error, target.fullPath, this.contentStore);
       if (error instanceof ConcurrentTargetChangeError) {
         this.store.updateProposalStatus(proposal.id, "rollback_conflict");
         return this.store.addPublishEvent({
@@ -347,10 +277,10 @@ export class EvolutionService {
           status: "conflict",
           targetPath: target.fullPath,
           expectedDigest: proposal.candidateDigest,
-          currentDigest: afterDigest,
+          currentDigest: evidence.currentDigest,
           resultingDigest: null,
-          currentContentRef: this.contentStore.put(afterContent).ref,
-          message: "The target changed immediately before atomic rollback. No user edit was overwritten."
+          currentContentRef: evidence.currentContentRef,
+          message: `${error.message}. No file was overwritten.${recoveryMessage(evidence.recoveryPath)}`
         });
       }
       const event = this.store.addPublishEvent({
@@ -359,10 +289,10 @@ export class EvolutionService {
         status: "failed",
         targetPath: target.fullPath,
         expectedDigest: proposal.candidateDigest,
-        currentDigest,
-        resultingDigest: afterDigest,
-        currentContentRef: this.contentStore.put(afterContent).ref,
-        message: `Atomic rollback failed; retained recovery refs remain available. ${error instanceof Error ? error.message : String(error)}`
+        currentDigest: evidence.currentDigest,
+        resultingDigest: existsSync(target.fullPath) ? sha256(readFileSync(target.fullPath)) : null,
+        currentContentRef: evidence.currentContentRef,
+        message: `Non-overwriting rollback failed. ${error instanceof Error ? error.message : String(error)}${recoveryMessage(evidence.recoveryPath)}`
       });
       throw new Error(event.message);
     }
@@ -373,10 +303,12 @@ export class EvolutionService {
       status: "applied",
       targetPath: target.fullPath,
       expectedDigest: proposal.candidateDigest,
-      currentDigest,
-      resultingDigest,
+      currentDigest: adoption.previousDigest,
+      resultingDigest: adoption.resultingDigest,
       currentContentRef: null,
-      message: "Original content restored because the current file still matched the published candidate."
+      message: adoption.recoveryPath === null
+        ? "The original was already present; rollback metadata was reconciled without changing the file."
+        : `Original content adopted without overwriting an existing target.${recoveryMessage(adoption.recoveryPath)}`
     });
   }
 

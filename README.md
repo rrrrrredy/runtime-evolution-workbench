@@ -86,7 +86,8 @@ See [installation and removal](docs/installation.md) for the exact state changes
 6. Create a proposal for exactly one `AGENTS.md` or one `SKILL.md`, using a failure Run and a distinct protection Run.
 7. Supply objective verifier commands. The workbench creates detached Git worktrees and runs exactly four cells.
 8. Review the exact diff and results. Approve and publish manually, or reject it.
-9. Roll back from the workbench only while the target still matches the published candidate. Otherwise it opens a conflict instead of overwriting later user work.
+9. Roll back from the workbench only while the target still matches the published candidate. Publication and rollback retain a same-volume recovery file and install only into an absent path; a concurrent save becomes a visible conflict instead of being replaced.
+10. After closing editors and reconciling the named recovery file, delete its `.runtime-evolution-workbench-recovery-*` directory manually. The preview never deletes recovery files automatically.
 
 Verifier commands execute locally in isolated worktrees with the current user's permissions. Review repository code and verifier arguments before running a comparison.
 

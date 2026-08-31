@@ -47,7 +47,11 @@ An Agent timeout, crash, verifier timeout/error, and worktree cleanup error rema
 
 ## Publishing and rollback
 
-A proposal is limited to one repository-relative `AGENTS.md` or `SKILL.md`. The product stores the original and candidate SHA-256 digests. Publishing requires a supported comparison, explicit approval, and a current file hash matching the original. Rollback requires the current hash to match the published candidate. A mismatch creates a conflict with the current content retained; it never overwrites later user edits.
+A proposal is limited to one repository-relative `AGENTS.md` or `SKILL.md`. The product stores the original and candidate SHA-256 digests. Publishing requires a supported comparison and explicit approval; rollback requires the published candidate as its expected preimage.
+
+The product does not replace the target path in place. Before moving the target it fsyncs a full immutable operation journal and a staged desired file, then proves that the same filesystem supports hard links. It moves the existing target into a unique `.runtime-evolution-workbench-recovery-*` directory and rechecks that guarded file. The desired file is linked into the target path only when the path is absent. If an editor recreates the target, changes the guarded inode, or the process stops between transitions, retry either restores by link into an absent path or preserves both files and reports a conflict. The recovery path is shown in publish history and is never deleted automatically because an editor may still hold the old inode open.
+
+This design can leave a visible untracked recovery directory in the repository. Close editors, compare the recovery file with the current target, retain anything needed, and delete that exact recovery directory manually. Do not add the directory to source control.
 
 ## Reporting vulnerabilities
 

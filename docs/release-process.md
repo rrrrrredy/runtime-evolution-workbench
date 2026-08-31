@@ -4,7 +4,7 @@ A green build is not a Runtime Evolution Workbench release.
 
 ## Fixed release inputs
 
-- RunCase Interchange: `v0.1.1`, pinned to the exact GitHub Release tarball and SHA-512 integrity.
+- RunCase Interchange: `v0.1.2`, pinned to commit `462fa2fa7cdaa8f58cd4c1dcc9cf778e1d2d0073` and the exact GitHub Release tarball with SHA-512 integrity.
 - Node.js: 22.23.2 in CI and release evidence; the product contract remains compatible with Node 22.x.
 - Codex CLI used by the real App Server gate: `0.150.0-alpha.8`.
 - The real gate uses the maintainer's existing local Codex authentication. No model credential is stored in GitHub.

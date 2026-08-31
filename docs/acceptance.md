@@ -25,6 +25,8 @@ Passing a build is not product acceptance. Version 0.1 may be labeled stable onl
 - Force a Codex timeout and a verifier timeout; confirm they are not labeled task failures.
 - Force Git worktree cleanup failure; confirm infrastructure status and cleanup evidence.
 - Modify the target capability file between proposal, publish, and rollback; confirm hash-safe conflict behavior.
+- Simulate an atomic-save editor after the target is guarded, a late write through the old file handle, and process interruption after journal, guard, and adoption transitions; confirm no bytes are replaced and the recovery path remains visible.
+- Reject publication before moving the target when the filesystem cannot create a no-clobber hard link.
 
 ## Installation and removal
 

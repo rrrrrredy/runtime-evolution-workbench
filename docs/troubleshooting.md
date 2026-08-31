@@ -59,7 +59,7 @@ Inspect all four cells. An absent objective result, Codex timeout/crash, workspa
 
 ## Publish or rollback reports a conflict
 
-The target file changed after the proposal or publish event. This is a safety outcome. Review the retained original/candidate/current content and merge manually. The product will not overwrite the later edit.
+The target file changed after the proposal or publish event. This is a safety outcome. Review the retained original/candidate/current content and any recovery path named in Publish & rollback history, then merge manually. Close editors before deleting that exact `.runtime-evolution-workbench-recovery-*` directory. The product will not overwrite the later edit or delete the recovery file automatically.
 
 ## Service stopped unexpectedly
 
