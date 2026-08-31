@@ -30,7 +30,7 @@
     "probe:ui": "node spikes/ui-synthetic-probe.mjs"
   },
   "dependencies": {
-    "@runcase/interchange": "https://github.com/rrrrrredy/runcase-interchange/releases/download/v0.1.0/runcase-interchange-0.1.0.tgz",
+    "@runcase/interchange": "https://github.com/rrrrrredy/runcase-interchange/releases/download/v0.1.1/runcase-interchange-0.1.1.tgz",
     "@fastify/cookie": "11.1.2",
     "@fastify/static": "10.1.3",
     "@modelcontextprotocol/sdk": "1.30.0",

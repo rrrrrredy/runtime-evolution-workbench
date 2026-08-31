@@ -13,9 +13,9 @@ const packageLock = JSON.parse(
 
 const dependencyName = "@runcase/interchange";
 const expectedUrl =
-  "https://github.com/rrrrrredy/runcase-interchange/releases/download/v0.1.0/runcase-interchange-0.1.0.tgz";
+  "https://github.com/rrrrrredy/runcase-interchange/releases/download/v0.1.1/runcase-interchange-0.1.1.tgz";
 const expectedIntegrity =
-  "sha512-RmdKYfHpH0fejZi3VmGXce2kmRvK278+305KzImWWjZt96Uyb1P52APmBujZXyj31t97TQlDDcXYX9iVkSm0Sg==";
+  "sha512-jAc8GVVskf+McWPnFJlnTjZz/VNNU8D+dqw8o4VubxwAMPmZ0uvTVSyHoGAZ9wYEcBz/vWJEwPttFB9gJjyEew==";
 
 function assertEqual(actual, expected, label) {
   if (actual !== expected) {
@@ -42,7 +42,7 @@ if (!lockedDependency) {
   throw new Error("package-lock is missing the RunCase Interchange package entry.");
 }
 
-assertEqual(lockedDependency.version, "0.1.0", "locked protocol version");
+assertEqual(lockedDependency.version, "0.1.1", "locked protocol version");
 assertEqual(lockedDependency.resolved, expectedUrl, "locked protocol source");
 assertEqual(
   lockedDependency.integrity,
@@ -66,5 +66,5 @@ for (const value of [
 }
 
 console.log(
-  "Release dependency contract passed: RunCase Interchange v0.1.0 HTTPS asset and SHA-512 are pinned.",
+  "Release dependency contract passed: RunCase Interchange v0.1.1 HTTPS asset and SHA-512 are pinned.",
 );

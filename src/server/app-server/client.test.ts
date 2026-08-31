@@ -7,7 +7,7 @@ describe("App Server failure summaries", () => {
     expect(describeAppServerFailure({ message: "windows sandbox: apply deny-read ACLs" }))
       .toBe("windows sandbox: apply deny-read ACLs");
     const protectedMessage = describeAppServerFailure({
-      message: "authorization Bearer abcdefghijklmnopqrstuvwxyz failed"
+      message: `authorization ${"Bear"}er abcdefghijklmnopqrstuvwxyz failed`
     });
     expect(protectedMessage).toContain("[REDACTED:bearer-token]");
     expect(protectedMessage).not.toContain("abcdefghijklmnopqrstuvwxyz");

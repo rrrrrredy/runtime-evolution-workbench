@@ -93,7 +93,7 @@ try {
     authenticated_product_gate = [ordered]@{
       status = "not_run"
       evidence_included = $false
-      claim = "This preview does not claim real authenticated Codex execution or clean-machine acceptance."
+      claim = "A GitHub-hosted Windows archive lifecycle is separate from the not-run real authenticated Codex and ordinary user-owned Windows 11 acceptance gates."
     }
     protocol_dependency = [string]$package.dependencies.'@runcase/interchange'
     archive = [ordered]@{

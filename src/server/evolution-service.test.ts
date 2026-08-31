@@ -1,11 +1,11 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
 import { ContentStore } from "./content-store.js";
-import { EvolutionService } from "./evolution-service.js";
+import { EvolutionService, replaceFileAtomically } from "./evolution-service.js";
 import { WorkbenchStore } from "./store.js";
 
 function fixture() {
@@ -31,6 +31,7 @@ function fixture() {
     workspace,
     target,
     store,
+    contentStore,
     service: new EvolutionService(store, contentStore),
     originalRun,
     protectionRun,
@@ -93,6 +94,74 @@ describe("EvolutionService", () => {
       expect(rollbackConflict.status).toBe("conflict");
       expect(rollbackConflict.currentContentRef).toMatch(/^sha256:/);
       expect(readFileSync(value.target, "utf8")).toContain("later user edit");
+    } finally {
+      value.store.close();
+      rmSync(value.root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+    }
+  });
+
+  it("preserves the target on write failure and on a last-moment concurrent edit", () => {
+    const value = fixture();
+    try {
+      const candidate = "# Rules\n\n- Verify atomically.\n";
+      const proposal = value.service.createProposal({
+        issueId: value.issue.id,
+        workspaceRoot: value.workspace,
+        targetPath: "AGENTS.md",
+        targetKind: "agents",
+        candidateContent: candidate,
+        rationale: "Protect capability files from partial writes and concurrent edits.",
+        originalRunId: value.originalRun.id,
+        protectionRunId: value.protectionRun.id
+      });
+      addSupportedComparison(value.store, proposal.id);
+      value.service.approve(proposal.id);
+
+      const failingService = new EvolutionService(value.store, value.contentStore, () => {
+        throw new Error("synthetic disk write failure");
+      });
+      expect(() => failingService.publish(proposal.id)).toThrow("Atomic publication failed");
+      expect(readFileSync(value.target, "utf8")).toBe("# Rules\n\n- Verify the result.\n");
+
+      const concurrentService = new EvolutionService(value.store, value.contentStore, (input) => {
+        writeFileSync(value.target, "# Rules\n\n- Last-moment user edit.\n", "utf8");
+        return replaceFileAtomically(input);
+      });
+      expect(concurrentService.publish(proposal.id).status).toBe("conflict");
+      expect(readFileSync(value.target, "utf8")).toContain("Last-moment user edit");
+      expect(
+        readdirSync(value.workspace).some((name) => name.includes("runtime-evolution") && name.endsWith(".tmp"))
+      ).toBe(false);
+    } finally {
+      value.store.close();
+      rmSync(value.root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+    }
+  });
+
+  it("reconciles publication after a crash immediately following atomic replacement", () => {
+    const value = fixture();
+    try {
+      const candidate = "# Rules\n\n- Recover an interrupted publish.\n";
+      const proposal = value.service.createProposal({
+        issueId: value.issue.id,
+        workspaceRoot: value.workspace,
+        targetPath: "AGENTS.md",
+        targetKind: "agents",
+        candidateContent: candidate,
+        rationale: "Recover publication metadata after an interrupted commit.",
+        originalRunId: value.originalRun.id,
+        protectionRunId: value.protectionRun.id
+      });
+      addSupportedComparison(value.store, proposal.id);
+      value.service.approve(proposal.id);
+      const interruptedService = new EvolutionService(value.store, value.contentStore, (input) => {
+        replaceFileAtomically(input);
+        throw new Error("synthetic process interruption after replacement");
+      });
+      expect(() => interruptedService.publish(proposal.id)).toThrow("Atomic publication failed");
+      expect(readFileSync(value.target, "utf8")).toBe(candidate);
+      expect(value.service.publish(proposal.id).status).toBe("applied");
+      expect(value.store.getProposal(proposal.id)?.status).toBe("published");
     } finally {
       value.store.close();
       rmSync(value.root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });

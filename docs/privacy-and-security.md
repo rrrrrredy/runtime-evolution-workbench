@@ -23,6 +23,8 @@ The Hook process applies redaction before writing its atomic spool file. The ser
 
 Redaction is intentionally reported in retained metadata. It is not a full data-loss-prevention system: an uncommon secret format inside an ordinary field can evade a pattern. Do not put production credentials in prompts, verifier arguments, repository fixtures, or capability files.
 
+Managed comparison Runs ask Codex App Server for ephemeral Threads. Their structured events and disclosed gaps are retained by this product, while the comparison Thread is not intentionally added to ordinary Codex history. Uninstall and zero-residue checks cover product-managed files and registration only; ordinary Codex history that existed before installation remains owned by Codex.
+
 Hidden reasoning is not captured. When an App Server item contains reasoning material, its content is excluded and an observation gap records the exclusion.
 
 ## Local API

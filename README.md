@@ -10,7 +10,7 @@ It is not another trace dashboard. The product is useful when a Run is over:
 4. require objective verifier results and a human approval before publishing;
 5. refuse to overwrite a file that changed after the proposal was created.
 
-> **Release status:** 0.1 technical preview for Windows 11 and Codex. CI covers the product, release archive, Windows installation lifecycle, and synthetic UI; this preview does not claim a real authenticated Codex run or clean-machine acceptance and must not be labeled stable.
+> **Release status:** 0.1 technical preview for Windows 11 and Codex. CI covers the product, release archive, a GitHub-hosted Windows archive lifecycle, and synthetic UI; this preview does not claim a real authenticated Codex run or acceptance on an ordinary user-owned Windows 11 machine and must not be labeled stable.
 
 macOS is not supported by the 0.1 installer or lifecycle tools. The Node service, web UI, Hooks, MCP server, and Codex App Server boundary are largely portable, but running those pieces from source is not a supported Mac installation.
 

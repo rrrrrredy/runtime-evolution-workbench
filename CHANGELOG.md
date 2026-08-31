@@ -4,9 +4,13 @@ All notable changes are recorded here. The project follows semantic versioning a
 
 ## [Unreleased]
 
+- Capability publication and rollback now stage same-directory files, flush and verify their bytes, recheck the expected digest immediately before atomic replacement, preserve last-moment user edits, and reconcile an interrupted commit on the next action.
+- The installer refuses a foreign same-name Startup shortcut; inspection reports the collision, and uninstall removes only a shortcut carrying this product's ownership marker.
+- Managed baseline/candidate comparisons now use ephemeral Codex Threads, and the Runs page exposes the existing validated Run export as a direct download.
+- Upgraded the only shared protocol dependency to RunCase Interchange v0.1.1, which rejects traversing portable paths.
 - The 0.1.0 tag path now publishes only a Windows technical preview: its attested manifest records that authenticated Codex and clean-machine gates were not run, while the optional real gate remains required before any stable label; macOS is explicitly unsupported.
 - Tag publishing now fails immediately while the repository is private, matching GitHub's provenance-attestation boundary for individual accounts and the documented public-before-tag release order.
-- The exact RunCase Interchange SHA-512 lock now matches the anonymously downloaded and provenance-verified public `v0.1.0` prerelease asset.
+- The exact RunCase Interchange SHA-512 lock now matches the anonymously downloaded and provenance-verified public `v0.1.1` prerelease asset.
 - GitHub tag releases now require curated, version-matched adoption notes and are labeled prereleases so the public release surface matches the product's technical-preview status.
 - Installation is now transactional across the product-created data root, plugin, marketplace, Startup shortcut, service startup, and failed `-Repair`; the clean-Windows gate injects real port conflicts and requires restoration plus a machine-readable zero-residue audit.
 - Every entry point now creates only a previously nonexistent data directory or reuses one with a valid product ownership marker; it rejects existing unmarked directories, wrong-product markers, reparse points, and protected roots.

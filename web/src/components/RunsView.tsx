@@ -7,6 +7,7 @@ import {
   ChevronRight,
   CircleDot,
   Clock3,
+  Download,
   FileCode2,
   MessageSquarePlus,
   RefreshCw,
@@ -122,6 +123,26 @@ export function RunsView({ runs, onDataChanged }: { runs: RunSummary[]; onDataCh
     }
   }
 
+  async function exportRun() {
+    if (bundle === null) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const document = await api<Record<string, unknown>>(`/api/runs/${bundle.run.id}/export`);
+      const blob = new Blob([`${JSON.stringify(document, null, 2)}\n`], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const anchor = window.document.createElement("a");
+      anchor.href = url;
+      anchor.download = `agent-run-${bundle.run.id}.json`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (runs.length === 0) {
     return (
       <div className="page-frame">
@@ -177,6 +198,7 @@ export function RunsView({ runs, onDataChanged }: { runs: RunSummary[]; onDataCh
               </div>
               <div className="title-actions">
                 <StatusBadge value={bundle.run.completeness} {...(bundle.run.completeness === "partial" ? { label: "Partial evidence" } : {})} />
+                <button className="secondary-button" disabled={busy} onClick={() => void exportRun()}><Download size={15} /> Export Run JSON</button>
                 <button className="secondary-button" onClick={() => void openThreadPicker()}><RefreshCw size={15} /> Backfill</button>
               </div>
             </header>

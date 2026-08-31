@@ -57,6 +57,53 @@ function Test-RewPluginInstalled([string]$Listing, [string]$Selector) {
   return $Listing -match "(?im)^\s*$escaped\s+installed(?:,|\s|$)"
 }
 
+function Get-RewStartupShortcutPath {
+  $startupDirectory = [Environment]::GetFolderPath("Startup")
+  if ([string]::IsNullOrWhiteSpace($startupDirectory)) {
+    throw "Windows Startup directory could not be resolved."
+  }
+  return Join-Path $startupDirectory "Runtime Evolution Workbench.lnk"
+}
+
+function Get-RewStartupShortcutDescription {
+  return "Runtime Evolution Workbench startup [owner:runtime-evolution-workbench]"
+}
+
+function Test-RewOwnedStartupShortcut([string]$ShortcutPath) {
+  if (-not (Test-Path -LiteralPath $ShortcutPath -PathType Leaf)) { return $false }
+  try {
+    $shell = New-Object -ComObject WScript.Shell
+    $shortcut = $shell.CreateShortcut($ShortcutPath)
+    $expectedScript = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "Start.ps1"))
+    $expectedWorkingDirectory = [System.IO.Path]::GetFullPath($script:RewRoot).TrimEnd('\')
+    $actualWorkingDirectory = [System.IO.Path]::GetFullPath([string]$shortcut.WorkingDirectory).TrimEnd('\')
+    $targetName = [System.IO.Path]::GetFileName([string]$shortcut.TargetPath).ToLowerInvariant()
+    $scriptArgument = '-File "' + $expectedScript + '"'
+    return (
+      ([string]$shortcut.Description -ceq (Get-RewStartupShortcutDescription)) -and
+      ($targetName -in @("pwsh.exe", "powershell.exe")) -and
+      ($actualWorkingDirectory -ceq $expectedWorkingDirectory) -and
+      ([string]$shortcut.Arguments).IndexOf($scriptArgument, [StringComparison]::OrdinalIgnoreCase) -ge 0
+    )
+  } catch {
+    return $false
+  }
+}
+
+function Assert-RewStartupShortcutAvailable([string]$ShortcutPath) {
+  if ((Test-Path -LiteralPath $ShortcutPath -PathType Leaf) -and -not (Test-RewOwnedStartupShortcut $ShortcutPath)) {
+    throw "The Startup shortcut name is already used by another application. It was not overwritten: $ShortcutPath"
+  }
+}
+
+function Remove-RewOwnedStartupShortcut([string]$ShortcutPath) {
+  if (Test-RewOwnedStartupShortcut $ShortcutPath) {
+    Remove-Item -LiteralPath $ShortcutPath -Force
+    return $true
+  }
+  return $false
+}
+
 function Get-RewDataDir([string]$Requested = "") {
   if (-not [string]::IsNullOrWhiteSpace($Requested)) {
     return [System.IO.Path]::GetFullPath($Requested)

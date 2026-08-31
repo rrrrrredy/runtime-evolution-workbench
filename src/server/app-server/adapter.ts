@@ -352,7 +352,7 @@ export class CodexAppServerAdapter {
       const threadResponse = await client.request<JsonObject>("thread/start", {
         ...workspace.threadStart,
         approvalPolicy: "never",
-        ephemeral: false,
+        ephemeral: true,
         historyMode: "paginated",
         threadSource: "runtime-evolution-workbench"
       }, 30_000);

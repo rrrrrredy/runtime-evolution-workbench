@@ -19,9 +19,10 @@ try {
 $startupDirectory = [Environment]::GetFolderPath("Startup")
 if (-not [string]::IsNullOrWhiteSpace($startupDirectory)) {
   $shortcutPath = Join-Path $startupDirectory "Runtime Evolution Workbench.lnk"
-  if (Test-Path -LiteralPath $shortcutPath -PathType Leaf) {
-    Remove-Item -LiteralPath $shortcutPath -Force
+  if (Remove-RewOwnedStartupShortcut $shortcutPath) {
     Write-Host "Removed current-user startup shortcut."
+  } elseif (Test-Path -LiteralPath $shortcutPath -PathType Leaf) {
+    Write-Warning "Preserved a same-name Startup shortcut because it is not owned by Runtime Evolution Workbench: $shortcutPath"
   }
 }
 
