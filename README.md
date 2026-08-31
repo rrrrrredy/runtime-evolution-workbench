@@ -12,6 +12,15 @@ It is not another trace dashboard. The product is useful when a Run is over:
 
 > **Release status:** 0.2 technical preview for Codex on Windows 11 x64, Linux x64, and Apple Silicon macOS. The tag workflow exercises each downloadable archive on GitHub-hosted runners. No physical Mac, ordinary user-owned clean machine, or authenticated Codex model run was used, so this release is not labeled stable.
 
+## Which repository should I use?
+
+| What you want to do | Start here |
+| --- | --- |
+| Keep, diagnose, compare, and safely apply one Codex capability-file change | [Runtime Evolution Workbench](https://github.com/rrrrrredy/runtime-evolution-workbench) |
+| Build and inspect resettable workflow Cases; run Codex only where the isolation gate passes | [Workflow Environment Factory](https://github.com/rrrrrredy/workflow-environment-factory) |
+| Capture DeepSeek Harness SDK Runs as portable evidence | [DeepSeek Harness RunCase Adapter](https://github.com/rrrrrredy/deepseek-harness-runcase-adapter) |
+| Validate or implement portable Run, Case, and Score files | [RunCase Interchange](https://github.com/rrrrrredy/runcase-interchange) |
+
 ![Runtime Evolution Workbench Runs page with synthetic demo data](docs/images/ui-desktop-runs-synthetic.png)
 
 ## What you get
@@ -85,12 +94,14 @@ $env:REW_NODE = 'D:\path\to\node-v22\node.exe'
 
 See [installation and removal](docs/installation.md) for the exact state changes and offline behavior.
 
+Default product data lives at `%LOCALAPPDATA%\RuntimeEvolutionWorkbench` on Windows and `~/.runtime-evolution-workbench` on Linux/macOS unless you pass `-DataDir` or `--data-dir`. Uninstall preserves this data unless you explicitly request data deletion.
+
 ## Normal use
 
 1. Use Codex normally. Hooks write redacted, atomic event envelopes to a local spool even when the workbench service is closed.
 2. Open the local workbench with `.\scripts\Start.ps1 -Open` on Windows or `./scripts/Start.sh --open` on Linux/macOS, then label the result or save a correction.
 3. Backfill a stored Codex Thread if needed. Treat the declared mapping gaps as part of the evidence.
-4. Optionally open **Protocol library** on the Runs page and import an `agent.run.v1`, `workflow.case.v1`, or `workflow.score.v1` file. Imports are validated, redacted again, and kept read-only in this product's own database. An external Run does not enter Runs, Issues, or Evolution Lab as a native Codex experiment.
+4. Optionally open **Protocol library** on the Runs page and import an `agent.run.v1`, `workflow.case.v1`, or `workflow.score.v1` file. Imports are validated, redacted again, and kept read-only in this product's own database. An external Run does not appear in Runs, Issues, or Evolution Lab.
 5. Create an Issue only when a Run or correction supports it. Keep counterevidence attached.
 6. Create a proposal for exactly one `AGENTS.md` or one `SKILL.md`, using a failure Run and a distinct protection Run.
 7. Supply objective verifier commands. The workbench creates detached Git worktrees and runs exactly four cells.
