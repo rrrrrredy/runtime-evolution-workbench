@@ -1,0 +1,28 @@
+{
+  "schema_version": "runtime-evolution-study-manifest.v1",
+  "study_id": "permission-safe-planning-locked-v2-2026-09",
+  "study_raw_sha256": "sha256:3b7c303b9357ad6bda8ab88412b849a2f7d7cca2f1b68397f78590eff7431482",
+  "prospective_registration": {
+    "schema_version": "runtime-evolution-registration-binding.v1",
+    "study_id": "permission-safe-planning-locked-v2-2026-09",
+    "agent_memory_event_id": "external-study-ceb4c41c862656307be4b73a8b561ebdabce51191bf72b2b8e5fc09e9ef29c07",
+    "agent_memory_record_sha256": "11750916ef155ddf68a470041cb98b8ffe1cf61c207d127fd5ded982a1d57837",
+    "registered_canonical_file_sha256": "ceb4c41c862656307be4b73a8b561ebdabce51191bf72b2b8e5fc09e9ef29c07",
+    "written": true,
+    "registered_before_first_formal_call": true,
+    "privacy": "local_only",
+    "claim_boundary": "This sanitized binding reports local prospective registration. The append-only evidence ledger remains outside Git."
+  },
+  "started_at": "2026-09-01T10:20:21.583182Z",
+  "codex_version": "codex-cli 0.151.0-alpha.7.2",
+  "guard_version": "5.2.1",
+  "source_model": "gpt-5.4-mini",
+  "transfer_models": [
+    "gpt-5.6-luna"
+  ],
+  "provider_seed_control": "unavailable",
+  "formal_retry_policy": "no selective retries; exact complete call artifacts are reusable after interruption",
+  "completed_at": "2026-09-01T10:55:12.914789Z",
+  "result_rows": 9,
+  "ledger_entries": 36
+}

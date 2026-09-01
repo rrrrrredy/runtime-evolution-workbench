@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rrrrrredy/runtime-evolution-workbench/schemas/rew.skill-impact-ledger.v1.schema.json",
+  "title": "Runtime Evolution Workbench Skill Impact Ledger v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "ledger_id", "generated_at", "product", "last_entry_digest", "entries"],
+  "properties": {
+    "schema_version": { "const": "rew.skill-impact-ledger.v1" },
+    "ledger_id": { "type": "string", "pattern": "^skill-impact-ledger:[0-9a-f]{64}$" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "product": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "const": "runtime-evolution-workbench" },
+        "version": { "type": "string", "minLength": 1 }
+      }
+    },
+    "last_entry_digest": { "anyOf": [{ "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }, { "type": "null" }] },
+    "entries": { "type": "array", "items": { "$ref": "#/$defs/entry" } }
+  },
+  "$defs": {
+    "scalar": { "anyOf": [{ "type": "string" }, { "type": "number" }, { "type": "boolean" }, { "type": "null" }] },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entry_id", "proposal_id", "comparison_id", "action", "decision", "target_kind", "target_path", "previous_digest", "candidate_digest", "metrics", "context", "evidence_refs", "pattern_ids", "security_attestation_digest", "note", "previous_entry_digest", "digest_material", "entry_digest", "created_at"],
+      "properties": {
+        "entry_id": { "type": "string", "minLength": 1 },
+        "proposal_id": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+        "comparison_id": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+        "action": { "enum": ["comparison", "approval", "publication", "rollback", "security_review", "study"] },
+        "decision": { "enum": ["supported", "not_supported", "inconclusive", "approved", "rejected", "published", "rolled_back", "rollback_conflict", "security_blocked", "held"] },
+        "target_kind": { "enum": ["agents", "skill"] },
+        "target_path": { "type": "string", "minLength": 1 },
+        "previous_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "candidate_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "metrics": { "type": "object", "additionalProperties": { "$ref": "#/$defs/scalar" } },
+        "context": { "type": "object", "additionalProperties": { "$ref": "#/$defs/scalar" } },
+        "evidence_refs": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "pattern_ids": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "security_attestation_digest": { "anyOf": [{ "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }, { "type": "null" }] },
+        "note": { "type": "string", "minLength": 1 },
+        "previous_entry_digest": { "anyOf": [{ "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }, { "type": "null" }] },
+        "digest_material": { "type": "string", "minLength": 2 },
+        "entry_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "created_at": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

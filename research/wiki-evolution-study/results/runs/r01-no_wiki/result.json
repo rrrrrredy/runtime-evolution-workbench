@@ -1,0 +1,26 @@
+{
+  "schema_version": "runtime-evolution-run.v1",
+  "run_id": "r01-no_wiki",
+  "replicate": 1,
+  "condition": "no_wiki",
+  "source_model": "gpt-5.4-mini",
+  "transfer_model": "gpt-5.6-luna",
+  "cross_model_transfer": 10.8333,
+  "target_skill_gain": 9.9747,
+  "rollback_count": 3,
+  "held_count": 0,
+  "security_blocks": 0,
+  "final_rule_lines": 9,
+  "final_rule_words": 64,
+  "costs": {
+    "input_tokens": 125143,
+    "reasoning_output_tokens": 8078,
+    "model_calls": 9,
+    "output_tokens": 13164,
+    "wall_time_ms": 256657,
+    "cached_input_tokens": 94208,
+    "tool_calls": 0
+  },
+  "final_skill_sha256": "sha256:504ba36c7b076bc99c31931856cc0d6795690603244e44832cb315a75cc2a591",
+  "pattern_registry_id": "pattern-registry:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+}

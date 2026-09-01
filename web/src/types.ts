@@ -1,4 +1,4 @@
-export type ViewName = "runs" | "issues" | "evolution";
+export type ViewName = "runs" | "issues" | "patterns" | "evolution";
 
 export interface ProtocolDocument {
   id: string;
@@ -168,6 +168,39 @@ export interface ComparisonDetail {
   comparison: Comparison;
   cases: ComparisonCase[];
   runs: ComparisonRun[];
+}
+
+export interface Pattern {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  scope: string;
+  status: "candidate" | "confirmed" | "contested" | "retired";
+  createdAt: string;
+  updatedAt: string;
+  evidenceCount: number;
+}
+
+export interface SkillImpact {
+  id: string;
+  proposalId: string | null;
+  comparisonId: string | null;
+  action: string;
+  decision: string;
+  targetKind: "agents" | "skill";
+  targetPath: string;
+  previousDigest: string;
+  candidateDigest: string;
+  metrics: Record<string, string | number | boolean | null>;
+  context: Record<string, string | number | boolean | null>;
+  evidenceRefs: string[];
+  patternIds: string[];
+  securityAttestationDigest: string | null;
+  note: string;
+  previousEntryDigest: string | null;
+  entryDigest: string;
+  createdAt: string;
 }
 
 export interface CodexThread {

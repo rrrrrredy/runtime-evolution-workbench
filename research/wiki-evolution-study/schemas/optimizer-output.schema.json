@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["skill_markdown", "change_summary", "patterns_used", "anticipated_tradeoffs"],
+  "properties": {
+    "skill_markdown": { "type": "string", "minLength": 120, "maxLength": 8000 },
+    "change_summary": { "type": "string", "minLength": 1, "maxLength": 1000 },
+    "patterns_used": { "type": "array", "items": { "type": "string" } },
+    "anticipated_tradeoffs": { "type": "array", "items": { "type": "string" } }
+  }
+}

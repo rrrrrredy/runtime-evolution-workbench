@@ -1,0 +1,11 @@
+{
+  "schema_version": "runtime-evolution-registration-binding.v1",
+  "study_id": "permission-safe-planning-locked-v2-2026-09",
+  "agent_memory_event_id": "external-study-ceb4c41c862656307be4b73a8b561ebdabce51191bf72b2b8e5fc09e9ef29c07",
+  "agent_memory_record_sha256": "11750916ef155ddf68a470041cb98b8ffe1cf61c207d127fd5ded982a1d57837",
+  "registered_canonical_file_sha256": "ceb4c41c862656307be4b73a8b561ebdabce51191bf72b2b8e5fc09e9ef29c07",
+  "written": true,
+  "registered_before_first_formal_call": true,
+  "privacy": "local_only",
+  "claim_boundary": "This sanitized binding reports local prospective registration. The append-only evidence ledger remains outside Git."
+}

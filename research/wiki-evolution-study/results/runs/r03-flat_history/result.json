@@ -1,0 +1,26 @@
+{
+  "schema_version": "runtime-evolution-run.v1",
+  "run_id": "r03-flat_history",
+  "replicate": 3,
+  "condition": "flat_history",
+  "source_model": "gpt-5.4-mini",
+  "transfer_model": "gpt-5.6-luna",
+  "cross_model_transfer": 8.0086,
+  "target_skill_gain": 10.3571,
+  "rollback_count": 2,
+  "held_count": 0,
+  "security_blocks": 0,
+  "final_rule_lines": 35,
+  "final_rule_words": 416,
+  "costs": {
+    "input_tokens": 145049,
+    "reasoning_output_tokens": 7608,
+    "model_calls": 9,
+    "output_tokens": 12211,
+    "wall_time_ms": 243078,
+    "cached_input_tokens": 85248,
+    "tool_calls": 0
+  },
+  "final_skill_sha256": "sha256:1873659ba1abd476d1a8376a9cb70ead14c46cadbf0c0b47057e0efeebbfbd91",
+  "pattern_registry_id": "pattern-registry:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+}

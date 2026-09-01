@@ -10,7 +10,7 @@ It is not another trace dashboard. The product is useful when a Run is over:
 4. require objective verifier results and a human approval before publishing;
 5. refuse to overwrite a file that changed after the proposal was created.
 
-> **Release status:** 0.2 technical preview for Codex on Windows 11 x64, Linux x64, and Apple Silicon macOS. The tag workflow exercises each downloadable archive on GitHub-hosted runners. No physical Mac, ordinary user-owned clean machine, or authenticated Codex model run was used, so this release is not labeled stable.
+> **Release status:** the main branch contains the 0.3.0 file protocols and study package. The latest packaged download remains the 0.2.0 technical preview for Codex on Windows 11 x64, Linux x64, and Apple Silicon macOS. No physical Mac, ordinary user-owned clean machine, or authenticated end-to-end product run supports a stable label.
 
 ## Which repository should I use?
 
@@ -25,11 +25,12 @@ It is not another trace dashboard. The product is useful when a Run is over:
 
 ## What you get
 
-The local workbench has three product surfaces:
+The local workbench has four product surfaces:
 
 - **Runs** keeps observed and product-managed executions, structured events, artifacts, outcomes, user corrections, visible evidence gaps, and a read-only library for portable Run/Case/Score files.
 - **Issues** turns selected evidence into a cause hypothesis. Instruction, Skill, tool, environment, permission, validation, model, and unknown remain separate categories.
 - **Evolution Lab** shows the exact one-file diff, the original failure case, one protection case, four baseline/candidate results, and publish/rollback history.
+- **Patterns & impact** keeps reusable patterns with separate support and counterexample records, and exports a forward-chained Skill Impact Ledger. These files connect to other products without sharing a database, executor, or approval authority.
 
 The Codex plugin is the entry and capture layer. It contributes lifecycle Hooks, bounded MCP evidence tools, and a Skill. The standalone local service and React workbench are the product; the plugin does not contain a second database or execution engine.
 
@@ -157,7 +158,19 @@ To obtain machine-readable proof that no service, PID file, Startup shortcut, pl
 Runtime Evolution Workbench does not share its service, database, queue, UI, executor, or business code with Workflow Environment Factory. See [architecture](docs/architecture.md).
 The exact portable-file boundary is documented in [protocol interoperability](docs/protocol.md).
 
-## Deliberate non-goals for 0.2
+## Persistent knowledge study
+
+The repository includes a prospectively registered, three-replicate comparison of no Wiki, flat chronological history, and a persistent Pattern Registry for one permission-safe planning scenario. All 87 model calls completed under frozen failure, protection, and transfer sets. The ledger contains 36 verified entries.
+
+| Condition | Task quality | Input tokens | Rule lines | Rollbacks | Target-model Skill gain |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| no Wiki | 87.4158 | 127016.7 | 28.3 | 2.33 | 12.7970 |
+| flat history | 89.6189 | 145269.3 | 41.0 | 1.67 | 9.6585 |
+| persistent Wiki | 87.3322 | 134773.7 | 32.7 | 2.00 | 11.6270 |
+
+Persistent Wiki did not beat flat history on task quality in this small study. It used 10495.7 fewer input tokens and showed 1.9685 points more target-model Skill gain, while task quality was 2.2867 points lower and rollbacks were 0.3333 higher. Treat this as descriptive evidence for one synthetic grader and two model versions in one family, not a broad Agent-performance claim. See the [registered study, reproducible harness, and sanitized results](research/wiki-evolution-study/README.md).
+
+## Deliberate non-goals for 0.3
 
 No cloud sync, team permissions, model training, automatic publication, arbitrary capability-file editing, modification of Codex Hook/MCP configuration, other Agent products, or claims based on hidden reasoning. A generic trace viewer is not the product.
 

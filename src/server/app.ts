@@ -10,6 +10,7 @@ import { CodexAppServerAdapter } from "./app-server/adapter.js";
 import { ComparisonService } from "./comparison-service.js";
 import type { WorkbenchConfig } from "./config.js";
 import { EvolutionService } from "./evolution-service.js";
+import { EvolutionKnowledgeService } from "./evolution-knowledge.js";
 import { HookIngestor } from "./hook-ingestor.js";
 import { AgentRunExporter } from "./protocol-export.js";
 import { ProtocolImportError, ProtocolImportService } from "./protocol-import.js";
@@ -25,6 +26,7 @@ export interface AppDependencies {
   exporter: AgentRunExporter;
   protocolImports: ProtocolImportService;
   evolution: EvolutionService;
+  knowledge: EvolutionKnowledgeService;
   comparisons: ComparisonService;
 }
 
@@ -88,6 +90,20 @@ const protocolImportBody = z.object({
   document: z.record(z.string(), z.unknown())
 });
 
+const patternBody = z.object({
+  slug: z.string().min(1).max(120).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  title: z.string().min(1).max(200),
+  summary: z.string().min(1).max(10_000),
+  scope: z.string().min(1).max(2_000),
+  status: z.enum(["candidate", "confirmed", "contested", "retired"]).optional(),
+  evidence: z.array(z.object({
+    kind: z.enum(["support", "counterexample"]),
+    sourceKind: z.enum(["run", "issue", "comparison", "proposal", "external"]),
+    sourceId: z.string().min(1).max(500),
+    note: z.string().min(1).max(5_000)
+  })).min(1).max(100)
+});
+
 function bearerToken(header: string | undefined): string | undefined {
   if (header === undefined) return undefined;
   const match = /^Bearer\s+(.+)$/i.exec(header);
@@ -101,7 +117,7 @@ export async function createWorkbenchApp(deps: AppDependencies): Promise<Fastify
   app.get("/health", async () => ({
     ok: true,
     product: "runtime-evolution-workbench",
-    version: "0.2.0",
+    version: "0.3.0",
     instance_id: process.env.REW_PROCESS_TOKEN ?? null
   }));
 
@@ -125,7 +141,7 @@ export async function createWorkbenchApp(deps: AppDependencies): Promise<Fastify
 
   app.get("/api/meta", async () => ({
     product: "Runtime Evolution Workbench",
-    version: "0.2.0",
+    version: "0.3.0",
     captureBoundary: "Observed Runs are best effort; Managed Runs retain live structured events and explicit exclusions.",
     dataDir: deps.config.dataDir
   }));
@@ -198,6 +214,53 @@ export async function createWorkbenchApp(deps: AppDependencies): Promise<Fastify
   });
 
   app.get("/api/issues", async () => ({ issues: deps.store.listIssues() }));
+
+  app.get("/api/patterns", async () => ({ patterns: deps.store.listPatterns() }));
+
+  app.get<{ Params: { id: string } }>("/api/patterns/:id", async (request, reply) => {
+    const detail = deps.knowledge.patternDetail(request.params.id);
+    return detail === null ? reply.code(404).send({ error: "pattern_not_found" }) : detail;
+  });
+
+  app.post("/api/patterns", async (request, reply) => {
+    const parsed = patternBody.safeParse(request.body);
+    if (!parsed.success) return reply.code(400).send({ error: z.prettifyError(parsed.error) });
+    try {
+      const created = parsed.data.status === undefined
+        ? deps.store.createPattern({
+            slug: parsed.data.slug,
+            title: parsed.data.title,
+            summary: parsed.data.summary,
+            scope: parsed.data.scope,
+            evidence: parsed.data.evidence,
+          })
+        : deps.store.createPattern({
+            slug: parsed.data.slug,
+            title: parsed.data.title,
+            summary: parsed.data.summary,
+            scope: parsed.data.scope,
+            status: parsed.data.status,
+            evidence: parsed.data.evidence,
+          });
+      return reply.code(201).send(created);
+    } catch (error) {
+      return reply.code(409).send({ error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  app.get("/api/evolution/pattern-registry/export", async (_request, reply) => {
+    reply.header("content-type", "application/json; charset=utf-8");
+    reply.header("content-disposition", "attachment; filename=pattern-registry.json");
+    return deps.knowledge.exportPatternRegistry();
+  });
+
+  app.get("/api/evolution/skill-impact-ledger", async () => ({ entries: deps.store.listSkillImpacts() }));
+
+  app.get("/api/evolution/skill-impact-ledger/export", async (_request, reply) => {
+    reply.header("content-type", "application/json; charset=utf-8");
+    reply.header("content-disposition", "attachment; filename=skill-impact-ledger.json");
+    return deps.knowledge.exportSkillImpactLedger();
+  });
 
   app.get<{ Params: { id: string } }>("/api/issues/:id", async (request, reply) => {
     const issue = deps.store.getIssue(request.params.id);

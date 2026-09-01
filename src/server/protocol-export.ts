@@ -78,7 +78,7 @@ export class AgentRunExporter {
       goal: { text: run.goal, source: "user" },
       agent: {
         product: run.agentProduct,
-        adapter_version: "runtime-evolution-workbench/0.2.0",
+        adapter_version: "runtime-evolution-workbench/0.3.0",
         model_provider: "openai",
         ...(run.agentVersion === null ? {} : { product_version: run.agentVersion }),
         ...(run.model === null ? {} : { model: run.model })

@@ -118,6 +118,10 @@ for ($attempt = 0; $attempt -lt 60; $attempt += 1) {
 
 if (-not $ready) {
   if (-not $serviceProcess.HasExited) { Stop-Process -Id $serviceProcess.Id -Force }
+  if (-not $serviceProcess.WaitForExit(5000)) {
+    throw "Runtime Evolution Workbench process $($serviceProcess.Id) did not exit after failed startup."
+  }
+  $serviceProcess.Dispose()
   if (Test-Path -LiteralPath $pidPath -PathType Leaf) { Remove-Item -LiteralPath $pidPath -Force }
   $errorTail = if (Test-Path -LiteralPath $stderrPath -PathType Leaf) {
     (Get-Content -LiteralPath $stderrPath -Tail 30) -join "`n"
@@ -125,8 +129,10 @@ if (-not $ready) {
   throw "Runtime Evolution Workbench did not become healthy on port $Port.`n$errorTail"
 }
 
+$serviceProcessId = $serviceProcess.Id
+$serviceProcess.Dispose()
 $sessionUrl = Get-RewSessionUrl $resolvedDataDir $Port
-Write-Host "Runtime Evolution Workbench is running as process $($serviceProcess.Id)."
+Write-Host "Runtime Evolution Workbench is running as process $serviceProcessId."
 Write-Host "Data: $resolvedDataDir"
 if ($null -ne $sessionUrl) {
   Write-Host $sessionUrl

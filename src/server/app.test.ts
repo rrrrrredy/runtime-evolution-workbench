@@ -10,6 +10,7 @@ import { ComparisonService } from "./comparison-service.js";
 import type { WorkbenchConfig } from "./config.js";
 import { ContentStore } from "./content-store.js";
 import { EvolutionService } from "./evolution-service.js";
+import { EvolutionKnowledgeService } from "./evolution-knowledge.js";
 import { HookIngestor } from "./hook-ingestor.js";
 import { AgentRunExporter } from "./protocol-export.js";
 import { ProtocolImportService } from "./protocol-import.js";
@@ -41,14 +42,17 @@ describe("local HTTP boundary", () => {
     const exporter = new AgentRunExporter(store);
     const protocolImports = new ProtocolImportService(store);
     const evolution = new EvolutionService(store, contentStore);
+    const knowledge = new EvolutionKnowledgeService(store);
     const comparisons = new ComparisonService(config, store, contentStore, adapter);
     const sessionToken = "0123456789abcdef0123456789abcdef";
-    const app = await createWorkbenchApp({ config, sessionToken, store, ingestor, adapter, exporter, protocolImports, evolution, comparisons });
+    const app = await createWorkbenchApp({ config, sessionToken, store, ingestor, adapter, exporter, protocolImports, evolution, knowledge, comparisons });
     try {
       expect((await app.inject({ method: "GET", url: "/health" })).statusCode).toBe(200);
       expect((await app.inject({ method: "GET", url: "/api/runs" })).statusCode).toBe(401);
+      expect((await app.inject({ method: "GET", url: "/api/patterns" })).statusCode).toBe(401);
       expect((await app.inject({ method: "POST", url: "/api/protocol/imports", payload: { document: {} } })).statusCode).toBe(401);
       expect((await app.inject({ method: "GET", url: "/api/runs", headers: { authorization: `Bearer ${sessionToken}` } })).statusCode).toBe(200);
+      expect((await app.inject({ method: "GET", url: "/api/patterns", headers: { authorization: `Bearer ${sessionToken}` } })).statusCode).toBe(200);
       expect((await app.inject({
         method: "POST",
         url: "/api/protocol/imports",

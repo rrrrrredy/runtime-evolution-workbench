@@ -1,0 +1,65 @@
+{
+  "schema_version": "skillops.runtime-evolution-summary.v1",
+  "source_schema_version": "rew.skill-impact-ledger.v1",
+  "ledger_id": "skill-impact-ledger:8f2057754c1126b3c7836875eb094f04684b6325bac23ed259449b59f9401ae7",
+  "last_entry_digest": "sha256:6efd34a2a253a42df72aa2b93b96efc943207e6a94496573a94b1fadd00f69b4",
+  "chain_verified": true,
+  "entries_verified": 36,
+  "conditions": [
+    {
+      "condition": "flat_history",
+      "entries": 12,
+      "decisions": {
+        "not_supported": 5,
+        "supported": 7
+      },
+      "rollback_events": 0,
+      "mean_task_quality": 81.0799,
+      "mean_tool_calls": 0.0,
+      "mean_input_tokens": 32886.3333,
+      "mean_output_tokens": 2266.1667,
+      "mean_wall_time_ms": 47332.0833,
+      "mean_rule_lines": 41.5,
+      "mean_rule_words": 430.8333,
+      "mean_rollback_count": 0.8333,
+      "mean_cross_model_transfer": 2.3076
+    },
+    {
+      "condition": "no_wiki",
+      "entries": 12,
+      "decisions": {
+        "not_supported": 7,
+        "supported": 5
+      },
+      "rollback_events": 0,
+      "mean_task_quality": 78.626,
+      "mean_tool_calls": 0.0,
+      "mean_input_tokens": 28340.5,
+      "mean_output_tokens": 2483.3333,
+      "mean_wall_time_ms": 50800.75,
+      "mean_rule_lines": 34.5833,
+      "mean_rule_words": 397.5833,
+      "mean_rollback_count": 1.1667,
+      "mean_cross_model_transfer": 10.5904
+    },
+    {
+      "condition": "persistent_wiki",
+      "entries": 12,
+      "decisions": {
+        "not_supported": 6,
+        "supported": 6
+      },
+      "rollback_events": 0,
+      "mean_task_quality": 79.0985,
+      "mean_tool_calls": 0.0,
+      "mean_input_tokens": 30262.4167,
+      "mean_output_tokens": 2188.5,
+      "mean_wall_time_ms": 45864.5,
+      "mean_rule_lines": 34.4167,
+      "mean_rule_words": 392.75,
+      "mean_rollback_count": 1.0,
+      "mean_cross_model_transfer": 7.5024
+    }
+  ],
+  "claim_boundary": "Descriptive summary of a verified local ledger; no causal, provider, or model-family certification."
+}

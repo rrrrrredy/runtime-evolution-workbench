@@ -11,6 +11,12 @@ Workbench ──> App Server adapter ──> stored-thread backfill
 
 Evolution Lab ──> isolated Git worktrees ──> objective verifier
               └──> journaled no-clobber publish / three-way rollback
+
+Patterns & impact ──> Pattern Registry JSON
+                  └──> forward-chained Skill Impact Ledger JSON
+
+Prospective study file ──> Agent Memory registration (separate product)
+Exported ledgers ──> SkillOps analysis (separate product)
 ```
 
 The plugin is a distribution and capture edge. The local service is the product.
@@ -23,6 +29,7 @@ The plugin is a distribution and capture edge. The local service is the product.
 - User-selected excluded paths are never read into the content store.
 - Managed runs use isolated worktrees, fixed inputs, and an explicit sandbox.
 - Publishing and rollback use a durable transition journal, a unique same-volume recovery directory, and hard-link create-if-absent adoption. They never use a replacing rename for the user target.
+- Pattern evidence preserves both support and counterexamples. Impact entries are append-only and forward-chained; exports are an interoperability boundary, not a cross-product authority channel.
 
 ## Codex 0.150.0-alpha.8 findings
 

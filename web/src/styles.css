@@ -245,6 +245,30 @@ blockquote small { display: block; margin-top: 5px; color: var(--muted); }
 .case-title span { display: grid; place-items: center; width: 24px; height: 24px; border: 1px solid var(--line-strong); font-family: monospace; font-size: 9px; }
 .case-title strong { font-size: 12px; }
 
+.knowledge-view { height: 100%; overflow: auto; padding: 26px; }
+.knowledge-view > .section-heading { margin-bottom: 18px; }
+.knowledge-description { max-width: 760px; margin: -8px 0 18px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.knowledge-export-row { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+.knowledge-export-row .secondary-button { text-decoration: none; }
+.knowledge-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.knowledge-panel { min-width: 0; border: 1px solid var(--line); background: var(--paper); }
+.knowledge-panel > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 16px; border-bottom: 1px solid var(--line); }
+.knowledge-panel > header > div { display: flex; align-items: center; min-width: 0; gap: 8px; }
+.knowledge-panel > header h2 { min-width: 0; margin: 0; font-size: 16px; overflow-wrap: anywhere; }
+.knowledge-panel > header p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.pattern-list, .impact-list { display: grid; gap: 10px; padding: 12px; }
+.pattern-card, .impact-card { min-width: 0; padding: 14px; border: 1px solid var(--line); background: var(--paper-strong); }
+.pattern-card-top, .impact-card > div:first-child { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; min-width: 0; gap: 10px; }
+.pattern-card header, .impact-card header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.pattern-card h3, .impact-card h3 { margin: 8px 0 0; font-size: 13px; overflow-wrap: anywhere; }
+.pattern-card p, .impact-card p { margin: 7px 0 0; color: var(--ink-soft); font-size: 12px; line-height: 1.55; }
+.pattern-card code, .impact-card code, .pattern-card small, .impact-card small { min-width: 0; overflow-wrap: anywhere; }
+.pattern-card small, .impact-card small { display: block; margin-top: 8px; color: var(--muted); line-height: 1.45; }
+.pattern-card dl, .impact-card dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 5px 10px; margin: 12px 0 0; font-size: 11px; }
+.pattern-card dt, .impact-card dt { color: var(--muted); }
+.pattern-card dd, .impact-card dd { margin: 0; overflow-wrap: anywhere; }
+.knowledge-empty { padding: 28px 16px; color: var(--muted); text-align: center; font-size: 12px; }
+
 @media (max-width: 1120px) {
   .app-shell { grid-template-columns: 76px minmax(0, 1fr); }
   .brand { justify-content: center; padding: 0; }
@@ -255,6 +279,7 @@ blockquote small { display: block; margin-top: 5px; color: var(--muted); }
   .split-page, .lab-page { grid-template-columns: 265px minmax(0, 1fr); }
   .lab-content { grid-template-columns: 1fr; }
   .diff-section { border-right: 0; }
+  .knowledge-columns { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 820px) {
@@ -285,6 +310,8 @@ blockquote small { display: block; margin-top: 5px; color: var(--muted); }
   .lab-content { display: block; }
   .lab-toolbar { align-items: flex-start; }
   .comparison-matrix { grid-template-columns: minmax(105px, .8fr) repeat(2, minmax(90px, 1fr)); }
+  .knowledge-view { height: auto; min-height: 100vh; padding: 18px; }
+  .knowledge-export-row { align-items: flex-start; flex-direction: column; }
 }
 
 @media (max-width: 520px) {
@@ -301,6 +328,14 @@ blockquote small { display: block; margin-top: 5px; color: var(--muted); }
   .matrix-label { grid-column: 1 / -1; }
   .form-pair { grid-template-columns: 1fr; }
   .protocol-list article { grid-template-columns: 1fr; gap: 6px; }
+  .knowledge-view { padding: 14px; }
+  .knowledge-view > .section-heading { align-items: stretch; flex-direction: column; }
+  .knowledge-view > .section-heading > div { min-width: 0; }
+  .knowledge-view > .section-heading .primary-button { justify-content: center; width: 100%; }
+  .knowledge-panel > header { padding: 14px; }
+  .pattern-list, .impact-list { padding: 10px; }
+  .pattern-card, .impact-card { padding: 12px; }
+  .pattern-card-top, .impact-card > div:first-child { align-items: flex-start; }
 }
 
 @media (prefers-reduced-motion: reduce) {

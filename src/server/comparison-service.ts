@@ -215,6 +215,33 @@ export class ComparisonService {
         ? "The four verifier results did not show a clean failure-case improvement with protection preserved."
         : "At least one required cell lacked an objective verifier result; no improvement claim is allowed.";
     this.store.finishComparison(id, infrastructureFailure ? "infrastructure_error" : "completed", summary, conclusion);
+    this.store.appendSkillImpact({
+      proposalId: proposal.id,
+      comparisonId: comparison.id,
+      action: "comparison",
+      decision: conclusion === "candidate_supported"
+        ? "supported"
+        : conclusion === "candidate_not_supported"
+          ? "not_supported"
+          : "inconclusive",
+      targetKind: proposal.targetKind,
+      targetPath: proposal.targetPath,
+      previousDigest: proposal.originalDigest,
+      candidateDigest: proposal.candidateDigest,
+      metrics: {
+        failure_baseline_pass: failureBaseline?.verifierStatus === "pass",
+        failure_candidate_pass: failureCandidate?.verifierStatus === "pass",
+        protection_baseline_pass: protectionBaseline?.verifierStatus === "pass",
+        protection_candidate_pass: protectionCandidate?.verifierStatus === "pass",
+        managed_run_count: runs.filter((run) => run.runId !== null).length,
+        infrastructure_failure: infrastructureFailure
+      },
+      context: { evidence_scope: "one-run-per-cell", base_commit: comparison.baseCommit },
+      evidenceRefs: runs.flatMap((run) => [run.runId, run.verifierOutputRef, run.patchRef].filter((value): value is string => value !== null)),
+      patternIds: [],
+      securityAttestationDigest: null,
+      note: summary
+    });
     this.store.updateProposalStatus(proposal.id, "ready");
     const detail = this.detail(id);
     if (detail === null) throw new Error("Comparison disappeared");

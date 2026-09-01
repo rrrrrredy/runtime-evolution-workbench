@@ -1,0 +1,4 @@
+condition,entries,rollback_events,mean_task_quality,mean_tool_calls,mean_input_tokens,mean_output_tokens,mean_wall_time_ms,mean_rule_lines,mean_rule_words,mean_rollback_count,mean_cross_model_transfer
+flat_history,12,0,81.0799,0.0,32886.3333,2266.1667,47332.0833,41.5,430.8333,0.8333,2.3076
+no_wiki,12,0,78.626,0.0,28340.5,2483.3333,50800.75,34.5833,397.5833,1.1667,10.5904
+persistent_wiki,12,0,79.0985,0.0,30262.4167,2188.5,45864.5,34.4167,392.75,1.0,7.5024

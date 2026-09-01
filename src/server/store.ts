@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 
-import { newId, stableUuid } from "../shared/ids.js";
+import { newId, sha256, stableUuid } from "../shared/ids.js";
 import type {
   CapabilityProposal,
   CapabilityTargetKind,
@@ -17,11 +17,16 @@ import type {
   IssueStatus,
   ObservationGap,
   OutcomeStatus,
+  PatternEvidenceRecord,
+  PatternRecord,
+  PatternStatus,
   ProposalStatus,
   ProtocolDocumentRecord,
   PublishEvent,
   RunMode,
   RunStatus,
+  ScalarMetric,
+  SkillImpactEntry,
   StoredEvent,
   StoredRun,
   UserCorrection
@@ -81,6 +86,16 @@ function parseJson<T>(value: unknown, fallback: T): T {
   } catch {
     return fallback;
   }
+}
+
+function canonicalize(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (typeof value !== "object" || value === null) return value;
+  return Object.fromEntries(
+    Object.entries(value)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, child]) => [key, canonicalize(child)])
+  );
 }
 
 function mapRun(row: Row): StoredRun {
@@ -238,6 +253,55 @@ function mapProtocolDocument(row: Row): ProtocolDocumentRecord {
     digest: asString(row.digest),
     document: parseJson<Record<string, unknown>>(row.payload_json, {}),
     importedAt: asString(row.imported_at)
+  };
+}
+
+function mapPattern(row: Row): PatternRecord {
+  return {
+    id: asString(row.id),
+    slug: asString(row.slug),
+    title: asString(row.title),
+    summary: asString(row.summary),
+    scope: asString(row.scope),
+    status: asString(row.status) as PatternStatus,
+    createdAt: asString(row.created_at),
+    updatedAt: asString(row.updated_at),
+    evidenceCount: Number(row.evidence_count ?? 0)
+  };
+}
+
+function mapPatternEvidence(row: Row): PatternEvidenceRecord {
+  return {
+    id: asString(row.id),
+    patternId: asString(row.pattern_id),
+    kind: asString(row.kind) as PatternEvidenceRecord["kind"],
+    sourceKind: asString(row.source_kind) as PatternEvidenceRecord["sourceKind"],
+    sourceId: asString(row.source_id),
+    note: asString(row.note),
+    createdAt: asString(row.created_at)
+  };
+}
+
+function mapSkillImpact(row: Row): SkillImpactEntry {
+  return {
+    id: asString(row.id),
+    proposalId: asNullableString(row.proposal_id),
+    comparisonId: asNullableString(row.comparison_id),
+    action: asString(row.action) as SkillImpactEntry["action"],
+    decision: asString(row.decision) as SkillImpactEntry["decision"],
+    targetKind: asString(row.target_kind) as SkillImpactEntry["targetKind"],
+    targetPath: asString(row.target_path),
+    previousDigest: asString(row.previous_digest),
+    candidateDigest: asString(row.candidate_digest),
+    metrics: parseJson<Record<string, ScalarMetric>>(row.metrics_json, {}),
+    context: parseJson<Record<string, ScalarMetric>>(row.context_json, {}),
+    evidenceRefs: parseJson<string[]>(row.evidence_refs_json, []),
+    patternIds: parseJson<string[]>(row.pattern_ids_json, []),
+    securityAttestationDigest: asNullableString(row.security_attestation_digest),
+    note: asString(row.note),
+    previousEntryDigest: asNullableString(row.previous_entry_digest),
+    entryDigest: asString(row.entry_digest),
+    createdAt: asString(row.created_at)
   };
 }
 
@@ -408,6 +472,52 @@ export class WorkbenchStore {
         created_at TEXT NOT NULL,
         UNIQUE(comparison_id, case_id, variant)
       );
+
+      CREATE TABLE IF NOT EXISTS patterns (
+        id TEXT PRIMARY KEY,
+        slug TEXT NOT NULL UNIQUE,
+        title TEXT NOT NULL,
+        summary TEXT NOT NULL,
+        scope TEXT NOT NULL,
+        status TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS patterns_updated_idx ON patterns(updated_at DESC);
+
+      CREATE TABLE IF NOT EXISTS pattern_evidence (
+        id TEXT PRIMARY KEY,
+        pattern_id TEXT NOT NULL REFERENCES patterns(id) ON DELETE CASCADE,
+        kind TEXT NOT NULL,
+        source_kind TEXT NOT NULL,
+        source_id TEXT NOT NULL,
+        note TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        UNIQUE(pattern_id, kind, source_kind, source_id, note)
+      );
+      CREATE INDEX IF NOT EXISTS pattern_evidence_pattern_idx ON pattern_evidence(pattern_id, created_at);
+
+      CREATE TABLE IF NOT EXISTS skill_impact_entries (
+        id TEXT PRIMARY KEY,
+        proposal_id TEXT REFERENCES capability_proposals(id) ON DELETE SET NULL,
+        comparison_id TEXT REFERENCES comparisons(id) ON DELETE SET NULL,
+        action TEXT NOT NULL,
+        decision TEXT NOT NULL,
+        target_kind TEXT NOT NULL,
+        target_path TEXT NOT NULL,
+        previous_digest TEXT NOT NULL,
+        candidate_digest TEXT NOT NULL,
+        metrics_json TEXT NOT NULL,
+        context_json TEXT NOT NULL,
+        evidence_refs_json TEXT NOT NULL,
+        pattern_ids_json TEXT NOT NULL,
+        security_attestation_digest TEXT,
+        note TEXT NOT NULL,
+        previous_entry_digest TEXT,
+        entry_digest TEXT NOT NULL UNIQUE,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS skill_impact_created_idx ON skill_impact_entries(created_at, id);
 
       CREATE TABLE IF NOT EXISTS protocol_documents (
         id TEXT PRIMARY KEY,
@@ -907,6 +1017,128 @@ export class WorkbenchStore {
       UPDATE comparison_runs SET infrastructure_error = ?
       WHERE comparison_id = ? AND case_id = ? AND variant = ?
     `).run(message, comparisonId, caseId, variant);
+  }
+
+  createPattern(input: {
+    slug: string;
+    title: string;
+    summary: string;
+    scope: string;
+    status?: PatternStatus;
+    evidence: Array<Omit<PatternEvidenceRecord, "id" | "patternId" | "createdAt">>;
+  }): PatternRecord {
+    const id = newId();
+    const now = new Date().toISOString();
+    this.transaction(() => {
+      this.#db.prepare(`
+        INSERT INTO patterns (id, slug, title, summary, scope, status, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(id, input.slug, input.title, input.summary, input.scope, input.status ?? "candidate", now, now);
+      const statement = this.#db.prepare(`
+        INSERT INTO pattern_evidence (id, pattern_id, kind, source_kind, source_id, note, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `);
+      for (const evidence of input.evidence) {
+        statement.run(newId(), id, evidence.kind, evidence.sourceKind, evidence.sourceId, evidence.note, now);
+      }
+    });
+    const pattern = this.getPattern(id);
+    if (pattern === null) throw new Error("Pattern could not be created");
+    return pattern;
+  }
+
+  getPattern(id: string): PatternRecord | null {
+    const row = this.#db.prepare(`
+      SELECT p.*, COUNT(e.id) AS evidence_count
+      FROM patterns p LEFT JOIN pattern_evidence e ON e.pattern_id = p.id
+      WHERE p.id = ? GROUP BY p.id
+    `).get(id) as Row | undefined;
+    return row === undefined ? null : mapPattern(row);
+  }
+
+  listPatterns(): PatternRecord[] {
+    return (this.#db.prepare(`
+      SELECT p.*, COUNT(e.id) AS evidence_count
+      FROM patterns p LEFT JOIN pattern_evidence e ON e.pattern_id = p.id
+      GROUP BY p.id ORDER BY p.updated_at DESC, p.slug
+    `).all() as Row[]).map(mapPattern);
+  }
+
+  listPatternEvidence(patternId: string): PatternEvidenceRecord[] {
+    return (this.#db.prepare(
+      "SELECT * FROM pattern_evidence WHERE pattern_id = ? ORDER BY created_at, id"
+    ).all(patternId) as Row[]).map(mapPatternEvidence);
+  }
+
+  appendSkillImpact(input: Omit<SkillImpactEntry,
+    "id" | "previousEntryDigest" | "entryDigest" | "createdAt">): SkillImpactEntry {
+    return this.transaction(() => {
+      const previousRow = this.#db.prepare(
+        "SELECT entry_digest FROM skill_impact_entries ORDER BY rowid DESC LIMIT 1"
+      ).get() as Row | undefined;
+      const previousEntryDigest = previousRow === undefined ? null : asString(previousRow.entry_digest);
+      const id = newId();
+      const createdAt = new Date().toISOString();
+      const material = {
+        id,
+        proposalId: input.proposalId,
+        comparisonId: input.comparisonId,
+        action: input.action,
+        decision: input.decision,
+        targetKind: input.targetKind,
+        targetPath: input.targetPath,
+        previousDigest: input.previousDigest,
+        candidateDigest: input.candidateDigest,
+        metrics: input.metrics,
+        context: input.context,
+        evidenceRefs: input.evidenceRefs,
+        patternIds: input.patternIds,
+        securityAttestationDigest: input.securityAttestationDigest,
+        note: input.note,
+        previousEntryDigest,
+        createdAt
+      };
+      const entryDigest = sha256(JSON.stringify(canonicalize(material)));
+      this.#db.prepare(`
+        INSERT INTO skill_impact_entries (
+          id, proposal_id, comparison_id, action, decision, target_kind, target_path,
+          previous_digest, candidate_digest, metrics_json, context_json, evidence_refs_json,
+          pattern_ids_json, security_attestation_digest, note, previous_entry_digest,
+          entry_digest, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        id,
+        input.proposalId,
+        input.comparisonId,
+        input.action,
+        input.decision,
+        input.targetKind,
+        input.targetPath,
+        input.previousDigest,
+        input.candidateDigest,
+        JSON.stringify(input.metrics),
+        JSON.stringify(input.context),
+        JSON.stringify(input.evidenceRefs),
+        JSON.stringify(input.patternIds),
+        input.securityAttestationDigest,
+        input.note,
+        previousEntryDigest,
+        entryDigest,
+        createdAt
+      );
+      const entry = this.getSkillImpact(id);
+      if (entry === null) throw new Error("Skill impact entry could not be created");
+      return entry;
+    });
+  }
+
+  getSkillImpact(id: string): SkillImpactEntry | null {
+    const row = this.#db.prepare("SELECT * FROM skill_impact_entries WHERE id = ?").get(id) as Row | undefined;
+    return row === undefined ? null : mapSkillImpact(row);
+  }
+
+  listSkillImpacts(): SkillImpactEntry[] {
+    return (this.#db.prepare("SELECT * FROM skill_impact_entries ORDER BY rowid").all() as Row[]).map(mapSkillImpact);
   }
 
   saveProtocolDocument(record: ProtocolDocumentRecord): ProtocolDocumentRecord {

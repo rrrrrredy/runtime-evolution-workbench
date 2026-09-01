@@ -1,0 +1,40 @@
+{
+  "schema_version": "runtime-evolution-study.v1",
+  "study_id": "permission-safe-planning-locked-v2-2026-09",
+  "title": "Persistent evolution knowledge ablation for permission-safe repository planning",
+  "created_at": "2026-09-01T10:18:48.5284300Z",
+  "scenario": "A model discovers and executes a procedural Skill for permission-safe local repository action planning under frozen objective cases.",
+  "hypotheses": [
+    {"id": "H1", "statement": "Persistent Wiki produces higher final failure-plus-protection task quality than flat chronological history.", "direction": "greater"},
+    {"id": "H2", "statement": "Persistent Wiki reaches its final task quality with no greater model-call and token cost than flat chronological history.", "direction": "less"},
+    {"id": "H3", "statement": "Persistent Wiki produces fewer candidate rollbacks than flat chronological history.", "direction": "less"},
+    {"id": "H4", "statement": "Final Skills show condition-dependent transfer differences when executed by a second model version.", "direction": "descriptive"}
+  ],
+  "conditions": [
+    {"condition_id": "no_wiki", "optimizer_context": "current_trace_only"},
+    {"condition_id": "flat_history", "optimizer_context": "chronological_history"},
+    {"condition_id": "persistent_wiki", "optimizer_context": "pattern_registry"}
+  ],
+  "replicates": 3,
+  "iterations_per_replicate": 3,
+  "source_model": "gpt-5.4-mini",
+  "transfer_models": ["gpt-5.6-luna"],
+  "datasets": {
+    "failure": {"path": "datasets/failure.json", "sha256": "sha256:df07ba4bfe37db69d59be12bb15d005ef63730d778fe80eac76cf8d5d4e73122", "cases": 6},
+    "protection": {"path": "datasets/protection.json", "sha256": "sha256:0987b8c97e56aa4ef929e44f5fe4a81a264f9a45d22067619ae9be5127d8c115", "cases": 6},
+    "transfer": {"path": "datasets/transfer.json", "sha256": "sha256:c0187eb7ff71e1ad88031ea40f1ae93727986d18cb65ddabaa255e4f41be5cda", "cases": 6}
+  },
+  "metrics": ["task_quality", "tool_calls", "input_tokens", "output_tokens", "wall_time_ms", "rule_lines", "rule_words", "rollback_count", "cross_model_transfer"],
+  "assignment": {"method": "fixed_seed_round_robin", "seed": 260901},
+  "candidate_gate": {"improve": "activate", "tie": "hold", "degrade": "rollback", "security_failure": "block"},
+  "artifacts": {
+    "initial_skill": {"path": "initial-skill/SKILL.md", "sha256": "sha256:504ba36c7b076bc99c31931856cc0d6795690603244e44832cb315a75cc2a591"},
+    "harness": {"path": "run_study.py", "sha256": "sha256:164eb4bce920c49b98b2a76bce838806cc743ce876e776379d509cdd1961f05f"},
+    "harness_tests": {"path": "test_run_study.py", "sha256": "sha256:5b6cf41e0c325ee07196d4e50e1c84db126b7ec14f6d284bad9fb707e45256a5"},
+    "executor_schema": {"path": "schemas/executor-output.schema.json", "sha256": "sha256:f11711c8796489ffbb7423c3581390375f18a80c2ac1b9340dd50ca29a22aaee"},
+    "optimizer_schema": {"path": "schemas/optimizer-output.schema.json", "sha256": "sha256:25cb753f53e8022d997b950add956341c04d90f9aa1c5506f45b916274ced961"},
+    "security_guard": {"name": "skill-security-guard", "version": "5.2.1", "sha256": "sha256:4045b03d9f7d5c4c15d28019beb76e9f5d96c257d4d26d60c42a1e6fb3dfe846"}
+  },
+  "claim_boundary": "Prospective descriptive evidence for one synthetic deterministic grader, three replicate sequences, and two Codex model versions in one model family; no causal, provider, independent safety, or broad Agent-performance certification.",
+  "privacy": "local_only"
+}

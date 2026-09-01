@@ -170,6 +170,23 @@ export class EvolutionService {
       throw new Error("Approval requires a completed comparison that supports the candidate; single-run evidence will remain labeled as such");
     }
     this.store.updateProposalStatus(id, "approved");
+    const candidate = this.contentStore.read(proposal.candidateContentRef).toString("utf8");
+    this.store.appendSkillImpact({
+      proposalId: proposal.id,
+      comparisonId: supportedComparison.id,
+      action: "approval",
+      decision: "approved",
+      targetKind: proposal.targetKind,
+      targetPath: proposal.targetPath,
+      previousDigest: proposal.originalDigest,
+      candidateDigest: proposal.candidateDigest,
+      metrics: { rule_lines: candidate.split(/\r?\n/).filter((line) => line.trim().length > 0).length },
+      context: { human_authorization_required: true, evidence_scope: "single-run" },
+      evidenceRefs: [supportedComparison.id, proposal.originalRunId, proposal.protectionRunId],
+      patternIds: [],
+      securityAttestationDigest: null,
+      note: "A local operator explicitly approved the comparison-supported candidate."
+    });
     return this.#requireProposal(id);
   }
 
@@ -179,6 +196,22 @@ export class EvolutionService {
       throw new Error(`Proposal cannot be rejected from status ${proposal.status}`);
     }
     this.store.updateProposalStatus(id, "rejected");
+    this.store.appendSkillImpact({
+      proposalId: proposal.id,
+      comparisonId: null,
+      action: "approval",
+      decision: "rejected",
+      targetKind: proposal.targetKind,
+      targetPath: proposal.targetPath,
+      previousDigest: proposal.originalDigest,
+      candidateDigest: proposal.candidateDigest,
+      metrics: {},
+      context: { human_authorization_required: true },
+      evidenceRefs: [proposal.originalRunId, proposal.protectionRunId],
+      patternIds: [],
+      securityAttestationDigest: null,
+      note: "A local operator rejected the candidate; the content remains retained for audit."
+    });
     return this.#requireProposal(id);
   }
 
@@ -206,7 +239,7 @@ export class EvolutionService {
     } catch (error) {
       const evidence = failureEvidence(error, target.fullPath, this.contentStore);
       if (error instanceof ConcurrentTargetChangeError) {
-        return this.store.addPublishEvent({
+        const event = this.store.addPublishEvent({
           proposalId: proposal.id,
           action: "publish",
           status: "conflict",
@@ -217,6 +250,8 @@ export class EvolutionService {
           currentContentRef: evidence.currentContentRef,
           message: `${error.message}. No file was overwritten.${recoveryMessage(evidence.recoveryPath)}`
         });
+        this.#recordPublishImpact(proposal, event, "held");
+        return event;
       }
       const event = this.store.addPublishEvent({
         proposalId: proposal.id,
@@ -229,11 +264,12 @@ export class EvolutionService {
         currentContentRef: evidence.currentContentRef,
         message: `Non-overwriting publication failed. ${error instanceof Error ? error.message : String(error)}${recoveryMessage(evidence.recoveryPath)}`
       });
+      this.#recordPublishImpact(proposal, event, "held");
       throw new Error(event.message);
     }
     const publishedAt = new Date().toISOString();
     this.store.updateProposalStatus(proposal.id, "published", publishedAt);
-    return this.store.addPublishEvent({
+    const event = this.store.addPublishEvent({
       proposalId: proposal.id,
       action: "publish",
       status: "applied",
@@ -246,6 +282,8 @@ export class EvolutionService {
         ? "The approved candidate was already present; publication metadata was reconciled without changing the file."
         : `Approved candidate adopted without overwriting an existing target.${recoveryMessage(adoption.recoveryPath)}`
     });
+    this.#recordPublishImpact(proposal, event, "published");
+    return event;
   }
 
   rollback(id: string): PublishEvent {
@@ -275,7 +313,7 @@ export class EvolutionService {
       const evidence = failureEvidence(error, target.fullPath, this.contentStore);
       if (error instanceof ConcurrentTargetChangeError) {
         this.store.updateProposalStatus(proposal.id, "rollback_conflict");
-        return this.store.addPublishEvent({
+        const event = this.store.addPublishEvent({
           proposalId: proposal.id,
           action: "rollback",
           status: "conflict",
@@ -286,6 +324,8 @@ export class EvolutionService {
           currentContentRef: evidence.currentContentRef,
           message: `${error.message}. No file was overwritten.${recoveryMessage(evidence.recoveryPath)}`
         });
+        this.#recordPublishImpact(proposal, event, "rollback_conflict");
+        return event;
       }
       const event = this.store.addPublishEvent({
         proposalId: proposal.id,
@@ -298,10 +338,11 @@ export class EvolutionService {
         currentContentRef: evidence.currentContentRef,
         message: `Non-overwriting rollback failed. ${error instanceof Error ? error.message : String(error)}${recoveryMessage(evidence.recoveryPath)}`
       });
+      this.#recordPublishImpact(proposal, event, "held");
       throw new Error(event.message);
     }
     this.store.updateProposalStatus(proposal.id, "rolled_back");
-    return this.store.addPublishEvent({
+    const event = this.store.addPublishEvent({
       proposalId: proposal.id,
       action: "rollback",
       status: "applied",
@@ -313,6 +354,31 @@ export class EvolutionService {
       message: adoption.recoveryPath === null
         ? "The original was already present; rollback metadata was reconciled without changing the file."
         : `Original content adopted without overwriting an existing target.${recoveryMessage(adoption.recoveryPath)}`
+    });
+    this.#recordPublishImpact(proposal, event, "rolled_back");
+    return event;
+  }
+
+  #recordPublishImpact(
+    proposal: CapabilityProposal,
+    event: PublishEvent,
+    decision: "published" | "rolled_back" | "rollback_conflict" | "held"
+  ): void {
+    this.store.appendSkillImpact({
+      proposalId: proposal.id,
+      comparisonId: null,
+      action: event.action === "publish" ? "publication" : "rollback",
+      decision,
+      targetKind: proposal.targetKind,
+      targetPath: proposal.targetPath,
+      previousDigest: event.expectedDigest,
+      candidateDigest: event.resultingDigest ?? event.currentDigest,
+      metrics: { applied: event.status === "applied", conflict: event.status === "conflict" },
+      context: { publish_event_id: event.id, no_overwrite: true },
+      evidenceRefs: [event.id, ...(event.currentContentRef === null ? [] : [event.currentContentRef])],
+      patternIds: [],
+      securityAttestationDigest: null,
+      note: event.message
     });
   }
 

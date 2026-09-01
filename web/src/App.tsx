@@ -1,20 +1,23 @@
 import { useCallback, useEffect, useState } from "react";
-import { Activity, AlertCircle, Beaker, Database, Menu, RefreshCw, X } from "lucide-react";
+import { Activity, AlertCircle, Beaker, BookOpenCheck, Database, Menu, RefreshCw, X } from "lucide-react";
 
 import { api } from "./api";
 import { EvolutionView } from "./components/EvolutionView";
 import { IssuesView } from "./components/IssuesView";
+import { PatternsView } from "./components/PatternsView";
 import { RunsView } from "./components/RunsView";
-import type { Comparison, Issue, Proposal, RunSummary, ViewName } from "./types";
+import type { Comparison, Issue, Pattern, Proposal, RunSummary, SkillImpact, ViewName } from "./types";
 
 interface WorkspaceData {
   runs: RunSummary[];
   issues: Issue[];
   proposals: Proposal[];
   comparisons: Comparison[];
+  patterns: Pattern[];
+  impacts: SkillImpact[];
 }
 
-const emptyData: WorkspaceData = { runs: [], issues: [], proposals: [], comparisons: [] };
+const emptyData: WorkspaceData = { runs: [], issues: [], proposals: [], comparisons: [], patterns: [], impacts: [] };
 
 export function App() {
   const [view, setView] = useState<ViewName>("runs");
@@ -26,13 +29,22 @@ export function App() {
   const refresh = useCallback(async () => {
     setError(null);
     try {
-      const [runs, issues, proposals, comparisons] = await Promise.all([
+      const [runs, issues, proposals, comparisons, patterns, impacts] = await Promise.all([
         api<{ runs: RunSummary[] }>("/api/runs"),
         api<{ issues: Issue[] }>("/api/issues"),
         api<{ proposals: Proposal[] }>("/api/proposals"),
-        api<{ comparisons: Comparison[] }>("/api/comparisons")
+        api<{ comparisons: Comparison[] }>("/api/comparisons"),
+        api<{ patterns: Pattern[] }>("/api/patterns"),
+        api<{ entries: SkillImpact[] }>("/api/evolution/skill-impact-ledger")
       ]);
-      setData({ runs: runs.runs, issues: issues.issues, proposals: proposals.proposals, comparisons: comparisons.comparisons });
+      setData({
+        runs: runs.runs,
+        issues: issues.issues,
+        proposals: proposals.proposals,
+        comparisons: comparisons.comparisons,
+        patterns: patterns.patterns,
+        impacts: impacts.entries
+      });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
     } finally {
@@ -72,6 +84,9 @@ export function App() {
           <button className={view === "issues" ? "active" : ""} onClick={() => navigate("issues")}>
             <AlertCircle size={18} /><span>Issues</span><small>{data.issues.length}</small>
           </button>
+          <button className={view === "patterns" ? "active" : ""} onClick={() => navigate("patterns")}>
+            <BookOpenCheck size={18} /><span>Patterns</span><small>{data.patterns.length}</small>
+          </button>
           <button className={view === "evolution" ? "active" : ""} onClick={() => navigate("evolution")}>
             <Beaker size={18} /><span>Evolution Lab</span><small>{data.proposals.length}</small>
           </button>
@@ -93,6 +108,7 @@ export function App() {
         {loading ? <div className="loading-line"><span /> Loading local evidence…</div> : null}
         {!loading && view === "runs" ? <RunsView runs={data.runs} onDataChanged={refresh} /> : null}
         {!loading && view === "issues" ? <IssuesView issues={data.issues} runs={data.runs} onDataChanged={refresh} /> : null}
+        {!loading && view === "patterns" ? <PatternsView patterns={data.patterns} impacts={data.impacts} onDataChanged={refresh} /> : null}
         {!loading && view === "evolution" ? (
           <EvolutionView
             proposals={data.proposals}

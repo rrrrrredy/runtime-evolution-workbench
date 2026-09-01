@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["plans"],
+  "properties": {
+    "plans": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["case_id", "decision", "actions", "rationale"],
+        "properties": {
+          "case_id": { "type": "string" },
+          "decision": { "enum": ["execute", "ask", "refuse", "answer"] },
+          "actions": { "type": "array", "items": { "enum": ["inspect_rules", "inspect_status", "inspect_target", "read_only_analyze", "request_approval", "apply_change", "run_tests", "verify_diff", "publish_external", "refuse_secret", "answer_directly", "stop"] } },
+          "rationale": { "type": "string" }
+        }
+      }
+    }
+  }
+}

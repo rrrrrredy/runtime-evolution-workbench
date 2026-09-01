@@ -183,3 +183,119 @@ export interface ProtocolDocumentRecord {
   document: Record<string, unknown>;
   importedAt: string;
 }
+
+export type PatternStatus = "candidate" | "confirmed" | "contested" | "retired";
+export type PatternEvidenceKind = "support" | "counterexample";
+export type PatternSourceKind = "run" | "issue" | "comparison" | "proposal" | "external";
+
+export interface PatternEvidenceRecord {
+  id: string;
+  patternId: string;
+  kind: PatternEvidenceKind;
+  sourceKind: PatternSourceKind;
+  sourceId: string;
+  note: string;
+  createdAt: string;
+}
+
+export interface PatternRecord {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  scope: string;
+  status: PatternStatus;
+  createdAt: string;
+  updatedAt: string;
+  evidenceCount: number;
+}
+
+export type SkillImpactAction = "comparison" | "approval" | "publication" | "rollback" | "security_review" | "study";
+export type SkillImpactDecision =
+  | "supported"
+  | "not_supported"
+  | "inconclusive"
+  | "approved"
+  | "rejected"
+  | "published"
+  | "rolled_back"
+  | "rollback_conflict"
+  | "security_blocked"
+  | "held";
+
+export type ScalarMetric = string | number | boolean | null;
+
+export interface SkillImpactEntry {
+  id: string;
+  proposalId: string | null;
+  comparisonId: string | null;
+  action: SkillImpactAction;
+  decision: SkillImpactDecision;
+  targetKind: CapabilityTargetKind;
+  targetPath: string;
+  previousDigest: string;
+  candidateDigest: string;
+  metrics: Record<string, ScalarMetric>;
+  context: Record<string, ScalarMetric>;
+  evidenceRefs: string[];
+  patternIds: string[];
+  securityAttestationDigest: string | null;
+  note: string;
+  previousEntryDigest: string | null;
+  entryDigest: string;
+  createdAt: string;
+}
+
+export interface PatternRegistryDocument {
+  schema_version: "rew.pattern-registry.v1";
+  registry_id: string;
+  generated_at: string;
+  product: { name: "runtime-evolution-workbench"; version: string };
+  patterns: Array<{
+    pattern_id: string;
+    slug: string;
+    title: string;
+    summary: string;
+    scope: string;
+    status: PatternStatus;
+    created_at: string;
+    updated_at: string;
+    evidence: Array<{
+      evidence_id: string;
+      kind: PatternEvidenceKind;
+      source_kind: PatternSourceKind;
+      source_id: string;
+      note: string;
+      created_at: string;
+    }>;
+  }>;
+}
+
+export interface SkillImpactLedgerDocument {
+  schema_version: "rew.skill-impact-ledger.v1";
+  ledger_id: string;
+  generated_at: string;
+  product: { name: "runtime-evolution-workbench"; version: string };
+  last_entry_digest: string | null;
+  entries: Array<{
+    entry_id: string;
+    proposal_id: string | null;
+    comparison_id: string | null;
+    action: SkillImpactAction;
+    decision: SkillImpactDecision;
+    target_kind: CapabilityTargetKind;
+    target_path: string;
+    previous_digest: string;
+    candidate_digest: string;
+    metrics: Record<string, ScalarMetric>;
+    context: Record<string, ScalarMetric>;
+    evidence_refs: string[];
+    pattern_ids: string[];
+    security_attestation_digest: string | null;
+    note: string;
+    previous_entry_digest: string | null;
+    digest_material: string;
+    entry_digest: string;
+    created_at: string;
+  }>;
+}

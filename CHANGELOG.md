@@ -4,6 +4,11 @@ All notable changes are recorded here. The project follows semantic versioning a
 
 ## [Unreleased]
 
+- Added a persistent Pattern Registry that keeps supporting evidence and counterexamples as distinct records.
+- Added a forward-chained Skill Impact Ledger for comparisons, approvals, publication, rollback, security reviews, and prospective studies.
+- Added authenticated JSON exports and versioned schemas for the Pattern Registry, Skill Impact Ledger, and prospective three-condition evolution studies.
+- Added a responsive **Patterns & impact** workbench surface. Cross-product use remains file-based and grants no execution, approval, or publication authority.
+
 ## [0.2.0] - 2026-08-31
 
 - Added ownership-safe Linux/macOS install, start, stop, inspection, and uninstall entry points. Hosted Ubuntu and macOS CI now proves plugin registration, loopback service restart, explicit data deletion, and final absence without presenting that evidence as a physical-Mac or authenticated-Codex result.
